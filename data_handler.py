@@ -66,9 +66,14 @@ class DataHandler:
                     self.n += 1
         feature_path = os.path.join(dataset_path, 'features.npy')
         if os.path.exists(feature_path) and self.concat_feature:
-            self.features = np.load(feature_path, dtype=np.float32)
+            self.features = np.load(feature_path)
         else:
             self.features = np.zeros((self.n, 0), dtype=np.float32)
+        graph_path = os.path.join(dataset_path, 'graph.npy')
+        if os.path.exists(graph_path):
+            self.graph = np.load(graph_path)
+        else:
+            self.graph = np.zeros((self.n, self.n), dtype=np.float32)
         print('data handler init finished.')
     
     def to_index(self, text):

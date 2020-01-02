@@ -2,23 +2,8 @@ import argparse
 from data_handler import DataHandler
 from processor import Processor
 from config import Config
-from models.lstm_model import LSTM
-from models.text_cnn_model import TextCNN
-from models.gcn_model import GCN
-from models.gcn_lstm_model import GCN_LSTM
 import pickle
 import os
-
-def name_to_model(name, config):
-    if name == 'LSTM':
-        return LSTM(config)
-    if name == 'TextCNN':
-        return TextCNN(config)
-    if name == 'GCN':
-        return GCN_LSTM(config)
-    if name == 'GCN_LSTM':
-        return GCN_LSTM(config)
-    raise NotImplementedError
 
 def main():
     parser = argparse.ArgumentParser(description='Prerequisite prediction')
@@ -45,8 +30,7 @@ def main():
         with open(store_path, 'wb') as f:
             pickle.dump(store, f)
     config = Config(store)
-    model = name_to_model(args.model, config)
-    processor = Processor(model, store, config)
+    processor = Processor(args.model, store, config)
     processor.run()
 
 if __name__ == '__main__':
