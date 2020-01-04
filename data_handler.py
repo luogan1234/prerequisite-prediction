@@ -6,6 +6,7 @@ import tqdm
 
 class DataHandler:
     def __init__(self, dataset, model_name, lang, concat_feature, use_wiki, max_term_length, max_sentence_length):
+        self.dataset = dataset
         self.max_term_length = max_term_length
         self.max_sentence_length = max_sentence_length
         self.model_name = model_name
@@ -19,13 +20,13 @@ class DataHandler:
                 if line:
                     self.vocabs.append(line)
         self.embeddings = np.load(os.path.join(dataset_path, 'embeddings.npy'))
-        self.gcn_embeddings = []
+        self.concept_embeddings = []
         with open(os.path.join(dataset_path, 'concepts.txt'), 'r', encoding='utf-8') as f:
             for line in f.read().split('\n'):
                 if line:
                     self.concepts.append(line)
-                    self.gcn_embeddings.append(self.embeddings[self.vocabs.index(line)])
-        self.gcn_embeddings = np.array(self.gcn_embeddings)
+                    self.concept_embeddings.append(self.embeddings[self.vocabs.index(line)])
+        self.concept_embeddings = np.array(self.concept_embeddings)
         if self.use_wiki:
             self.concept_text = {}
             with open(os.path.join(dataset_path, 'concept_abstract.json'), 'r', encoding='utf-8') as f:
@@ -109,8 +110,8 @@ class DataHandler:
                     else:
                         i0 = self.padding(self.texts[index][0], self.max_sentence_length)
                         i1 = self.padding(self.texts[index][1], self.max_sentence_length)
-                    i2 = self.ids[index][0]
-                    i3 = self.ids[index][1]
+                    i2 = np.array(self.ids[index][0], dtype=np.int64)
+                    i3 = np.array(self.ids[index][1], dtype=np.int64)
                     f = self.features[index]
                     if self.model_name == 'LSTM':
                         group.append([[i0, i1, f], i])
@@ -120,6 +121,8 @@ class DataHandler:
                         group.append([[i2, i3, f], i])
                     if self.model_name == 'GCN_LSTM':
                         group.append([[i0, i1, i2, i3, f], i])
+                    if self.model_name == 'MLP':
+                        group.append([[i2, i3, f], i])
             if s != split:
                 train.extend(group)
             else:

@@ -126,6 +126,7 @@ venv.bak/
 dmypy.json
 dataset/
 tmp/
+result/
 
 # Pyre type checker
 .pyre/

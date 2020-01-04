@@ -7,9 +7,9 @@ from models.base_model import BaseModel
 class LSTM(BaseModel):
     def __init__(self, config):
         super().__init__(config)
-        self.lstm1 = nn.LSTM(config.embedding_dim, config.hidden_size, config.num_layers, bidirectional=True, batch_first=True, dropout=config.dropout)
-        self.lstm2 = nn.LSTM(config.embedding_dim, config.hidden_size, config.num_layers, bidirectional=True, batch_first=True, dropout=config.dropout)
-        self.fc = nn.Linear(config.hidden_size*4+config.feature_dim, config.num_classes)
+        self.lstm1 = nn.LSTM(config.embedding_dim, config.lstm_hidden, config.num_layers, bidirectional=True, batch_first=True, dropout=config.dropout)
+        self.lstm2 = nn.LSTM(config.embedding_dim, config.lstm_hidden, config.num_layers, bidirectional=True, batch_first=True, dropout=config.dropout)
+        self.fc = nn.Linear(config.lstm_hidden*4+config.feature_dim, config.num_classes)
 
     def forward(self, inputs):
         x1, x2, features = inputs
