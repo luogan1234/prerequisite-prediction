@@ -113,20 +113,22 @@ class Processor(object):
         #print(confusion)
         return p, r, f1
 
-    def run(self):
+    def run(self, output_res):
         ps, rs, f1s = [], [], []
         for split in range(self.config.total_splits):
             p, r, f1 = self.run_split(split)
             ps.append(p)
             rs.append(r)
             f1s.append(f1)
+            if output_res:
+                result_path = 'result/{}_{}_{}.txt'.format(self.model_name, self.store.dataset, self.config.epochs)
+                if not os.path.exists(result_path):
+                    with open(result_path, 'w', encoding='utf-8') as f:
+                        f.write('p\tr\tf1\tsplit\tconcat_feature\tuse_wiki\n')
+                with open(result_path, 'a', encoding='utf-8') as f:
+                    f.write('{:.3f}\t{:.3f}\t{:.3f}\t{}\t{}\t{}\n'.format(p, r, f1, split, self.config.concat_feature, self.config.use_wiki))
         ave_p = np.mean(ps)
         ave_r = np.mean(rs)
         ave_f1 = np.mean(f1s)
         print('average p {:.3f}, average r {:.3f}, average f1 {:.3f}'.format(ave_p, ave_r, ave_f1))
-        result_path = 'result/{}_{}_{}.txt'.format(self.model_name, self.store.dataset, self.config.epochs)
-        if not os.path.exists(result_path):
-            with open(result_path, 'w', encoding='utf-8') as f:
-                f.write('p\tr\tf1\tconcat_feature\tuse_wiki\n')
-        with open(result_path, 'a', encoding='utf-8') as f:
-            f.write('{}\t{}\t{:.3f}\t{:.3f}\t{:.3f}\n'.format(ave_p, ave_r, ave_f1, self.config.concat_feature, self.config.use_wiki))
+        

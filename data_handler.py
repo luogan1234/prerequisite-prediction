@@ -116,7 +116,7 @@ class DataHandler:
                     if self.model_name == 'LSTM':
                         group.append([[i0, i1, f], i])
                     if self.model_name == 'TextCNN':
-                        group.append([[i0+self.to_index(['SEP'])+i1, f], i])
+                        group.append([[np.concatenate([i0, self.to_index(['SEP']), i1], axis=0), f], i])
                     if self.model_name == 'GCN':
                         group.append([[i2, i3, f], i])
                     if self.model_name == 'GCN_LSTM':

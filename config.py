@@ -19,8 +19,8 @@ class Config:
         self.save_dir = None
         
         self.dropout = 0.5
-        self.filter_sizes = (2, 3, 4, 5)  # CNN
-        self.num_filters = 64  # CNN
+        self.filter_sizes = (3, 5)  # CNN
+        self.num_filters = 128  # CNN
         self.lstm_hidden = 64  # RNN
         self.num_layers = 1  # RNN
         self.laplacian1 = self.to_laplacian_matrix(store.graph.T)

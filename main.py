@@ -36,7 +36,7 @@ def main():
     if args.use_cpu:
         config.use_gpu = False
     processor = Processor(args.model, store, config)
-    processor.run()
+    processor.run(True)
 
 if __name__ == '__main__':
     main()
