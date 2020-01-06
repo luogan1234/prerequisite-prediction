@@ -22,7 +22,7 @@ def name_to_model(name, config):
         return TextCNN(config)
     if name == 'GCN':
         return GCN(config)
-    if name == 'GCN+LSTM':
+    if name == 'GCN_LSTM':
         return GCN_LSTM(config)
     if name == 'MLP':
         return MLP(config)

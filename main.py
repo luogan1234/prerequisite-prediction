@@ -7,7 +7,7 @@ import os
 
 def main():
     parser = argparse.ArgumentParser(description='Prerequisite prediction')
-    parser.add_argument('-model', type=str, required=True, choices=['LSTM', 'TextCNN', 'GCN', 'GCN+LSTM', 'MLP'], help='LSTM | TextCNN | GCN | GCN+LSTM | MLP')
+    parser.add_argument('-model', type=str, required=True, choices=['LSTM', 'TextCNN', 'GCN', 'GCN_LSTM', 'MLP'], help='LSTM | TextCNN | GCN | GCN_LSTM | MLP')
     parser.add_argument('-dataset', type=str, required=True, choices=['mooczh', 'moocen'], help='mooczh | moocen')
     parser.add_argument('-max_term_length', type=int, default=7)
     parser.add_argument('-max_sentence_length', type=int, default=100)
