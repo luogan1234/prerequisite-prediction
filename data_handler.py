@@ -5,13 +5,12 @@ import json
 import tqdm
 
 class DataHandler:
-    def __init__(self, dataset, model_name, lang, concat_feature, use_wiki, max_term_length, max_sentence_length):
+    def __init__(self, dataset, model_name, lang, use_wiki, max_term_length, max_sentence_length):
         self.dataset = dataset
         self.max_term_length = max_term_length
         self.max_sentence_length = max_sentence_length
         self.model_name = model_name
         self.lang = lang
-        self.concat_feature = concat_feature
         self.use_wiki = use_wiki
         dataset_path = 'dataset/{}/'.format(dataset)
         self.vocabs, self.concepts = [], []
@@ -65,11 +64,6 @@ class DataHandler:
                     self.ids.append(id)
                     self.labels.append(label)
                     self.n += 1
-        feature_path = os.path.join(dataset_path, 'features.npy')
-        if os.path.exists(feature_path) and self.concat_feature:
-            self.features = np.load(feature_path)
-        else:
-            self.features = np.zeros((self.n, 0), dtype=np.float32)
         graph_path = os.path.join(dataset_path, 'graph.npy')
         if os.path.exists(graph_path):
             self.graph = np.load(graph_path)
@@ -112,17 +106,16 @@ class DataHandler:
                         i1 = self.padding(self.texts[index][1], self.max_sentence_length)
                     i2 = np.array(self.ids[index][0], dtype=np.int64)
                     i3 = np.array(self.ids[index][1], dtype=np.int64)
-                    f = self.features[index]
                     if self.model_name == 'LSTM':
-                        group.append([[i0, i1, f], i])
+                        group.append([[i0, i1], i])
                     if self.model_name == 'TextCNN':
-                        group.append([[np.concatenate([i0, self.to_index(['SEP']), i1], axis=0), f], i])
+                        group.append([[np.concatenate([i0, self.to_index(['SEP']), i1], axis=0)], i])
                     if self.model_name == 'GCN':
-                        group.append([[i2, i3, f], i])
+                        group.append([[i2, i3], i])
                     if self.model_name == 'GCN_LSTM':
-                        group.append([[i0, i1, i2, i3, f], i])
+                        group.append([[i0, i1, i2, i3], i])
                     if self.model_name == 'MLP':
-                        group.append([[i2, i3, f], i])
+                        group.append([[i2, i3], i])
             if s != split:
                 train.extend(group)
             else:

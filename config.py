@@ -3,13 +3,11 @@ import torch
 
 class Config:
     def __init__(self, store):
-        self.concat_feature = store.concat_feature
         self.use_wiki = store.use_wiki
         
         self.embeddings = store.embeddings
         self.concept_embeddings = store.concept_embeddings
         self.embedding_dim = store.embeddings.shape[1]
-        self.feature_dim = store.features.shape[1]
         self.epochs = None
         self.batch_size = 64
         self.lr = 1e-3

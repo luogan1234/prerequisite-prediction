@@ -124,9 +124,9 @@ class Processor(object):
                 result_path = 'result/{}_{}_{}.txt'.format(self.model_name, self.store.dataset, self.config.epochs)
                 if not os.path.exists(result_path):
                     with open(result_path, 'w', encoding='utf-8') as f:
-                        f.write('p\tr\tf1\tsplit\tconcat_feature\tuse_wiki\n')
+                        f.write('p\tr\tf1\tsplit\tuse_wiki\n')
                 with open(result_path, 'a', encoding='utf-8') as f:
-                    f.write('{:.3f}\t{:.3f}\t{:.3f}\t{}\t{}\t{}\n'.format(p, r, f1, split, self.config.concat_feature, self.config.use_wiki))
+                    f.write('{:.3f}\t{:.3f}\t{:.3f}\t{}\t{}\n'.format(p, r, f1, split, self.config.use_wiki))
         ave_p = np.mean(ps)
         ave_r = np.mean(rs)
         ave_f1 = np.mean(f1s)
