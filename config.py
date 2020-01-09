@@ -18,20 +18,24 @@ class Config:
         
         self.dropout = 0.5
         self.filter_sizes = (3, 5)  # CNN
-        self.num_filters = 128  # CNN
-        self.lstm_hidden = 64  # RNN
+        self.num_filters = 64  # CNN
+        self.lstm_hidden = 32  # RNN
         self.num_layers = 1  # RNN
+        #self.graph = np.array(store.graph, dtype=np.float32)
         self.laplacian1 = self.to_laplacian_matrix(store.graph.T)
         self.laplacian2 = self.to_laplacian_matrix(store.graph)
-        self.gcn_hidden = 128  # GCN
-        self.mlp_dim = 128  # MLP
+        self.gcn_hidden = 64  # GCN
+        self.mlp_dim = 64  # MLP
     
     def to_laplacian_matrix(self, graph):
-        d = np.power(np.sum(graph, 0), -0.5)
-        d[np.isinf(d)] = 0
-        d = np.diag(d)
-        a = graph + np.eye(graph.shape[0])
-        laplacian = np.matmul(np.matmul(d, a), d)
+        a = np.eye(graph.shape[0]) - graph
+        d1 = np.power(np.sum(np.abs(a), 1), -0.5)
+        d1[np.isinf(d1)] = 0
+        d1 = np.diag(d1)
+        d2 = np.power(np.sum(np.abs(a), 0), -0.5)
+        d2[np.isinf(d2)] = 0
+        d2 = np.diag(d2)
+        laplacian = np.matmul(np.matmul(d1, a), d2)
         laplacian = self.to_torch(np.array(laplacian, dtype=np.float32))
         return laplacian
     

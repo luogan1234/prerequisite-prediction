@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 from models.base_model import BaseModel
 from models.gcn_layer import GraphConvolution
+from models.mlp_classification_layer import MLPClassification
 
 class GCN(BaseModel):
     def __init__(self, config):
@@ -11,7 +12,7 @@ class GCN(BaseModel):
         self.h0 = config.to_torch(config.concept_embeddings)
         self.gc1 = GraphConvolution(config.embedding_dim, config.gcn_hidden, config.laplacian1)
         self.gc2 = GraphConvolution(config.embedding_dim, config.gcn_hidden, config.laplacian2)
-        self.fc = nn.Linear(config.gcn_hidden*2, config.num_classes)
+        self.fc = MLPClassification(config.gcn_hidden*2, config.num_classes)
 
     def forward(self, inputs):
         x1, x2 = inputs

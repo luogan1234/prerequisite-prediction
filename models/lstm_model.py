@@ -3,13 +3,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from models.base_model import BaseModel
+from models.mlp_classification_layer import MLPClassification
 
 class LSTM(BaseModel):
     def __init__(self, config):
         super().__init__(config)
-        self.lstm1 = nn.LSTM(config.embedding_dim, config.lstm_hidden, config.num_layers, bidirectional=True, batch_first=True, dropout=config.dropout)
-        self.lstm2 = nn.LSTM(config.embedding_dim, config.lstm_hidden, config.num_layers, bidirectional=True, batch_first=True, dropout=config.dropout)
-        self.fc = nn.Linear(config.lstm_hidden*4, config.num_classes)
+        self.lstm1 = nn.LSTM(config.embedding_dim, config.lstm_hidden, config.num_layers, bidirectional=True, batch_first=True)
+        self.lstm2 = nn.LSTM(config.embedding_dim, config.lstm_hidden, config.num_layers, bidirectional=True, batch_first=True)
+        self.fc = MLPClassification(config.lstm_hidden*4, config.num_classes)
 
     def forward(self, inputs):
         x1, x2 = inputs

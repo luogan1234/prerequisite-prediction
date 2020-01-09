@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from models.base_model import BaseModel
+from models.mlp_classification_layer import MLPClassification
 
 class MLP(BaseModel):
     def __init__(self, config):
@@ -10,7 +11,7 @@ class MLP(BaseModel):
         self.concept_embedding = nn.Embedding.from_pretrained(torch.tensor(config.concept_embeddings), freeze=True)
         self.fc1 = nn.Linear(config.embedding_dim, config.mlp_dim)
         self.fc2 = nn.Linear(config.embedding_dim, config.mlp_dim)
-        self.fc = nn.Linear(config.mlp_dim*2, config.num_classes)
+        self.fc = MLPClassification(config.mlp_dim*2, config.num_classes)
 
     def forward(self, inputs):
         x1, x2 = inputs

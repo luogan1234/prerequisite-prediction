@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 from models.base_model import BaseModel
 from models.gcn_layer import GraphConvolution
+from models.mlp_classification_layer import MLPClassification
 
 class GCN_LSTM(BaseModel):
     def __init__(self, config):
@@ -11,9 +12,9 @@ class GCN_LSTM(BaseModel):
         self.h0 = config.to_torch(config.concept_embeddings)
         self.gc1 = GraphConvolution(config.embedding_dim, config.gcn_hidden, config.laplacian1)
         self.gc2 = GraphConvolution(config.embedding_dim, config.gcn_hidden, config.laplacian2)
-        self.lstm1 = nn.LSTM(config.embedding_dim, config.lstm_hidden, config.num_layers, bidirectional=True, batch_first=True, dropout=config.dropout)
-        self.lstm2 = nn.LSTM(config.embedding_dim, config.lstm_hidden, config.num_layers, bidirectional=True, batch_first=True, dropout=config.dropout)
-        self.fc = nn.Linear(config.gcn_hidden*2+config.lstm_hidden*4, config.num_classes)
+        self.lstm1 = nn.LSTM(config.embedding_dim, config.lstm_hidden, config.num_layers, bidirectional=True, batch_first=True)
+        self.lstm2 = nn.LSTM(config.embedding_dim, config.lstm_hidden, config.num_layers, bidirectional=True, batch_first=True)
+        self.fc = MLPClassification(config.gcn_hidden*2+config.lstm_hidden*4, config.num_classes)
 
     def forward(self, inputs):
         x1, x2, x3, x4 = inputs
