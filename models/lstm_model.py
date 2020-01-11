@@ -10,7 +10,7 @@ class LSTM(BaseModel):
         super().__init__(config)
         self.lstm1 = nn.LSTM(config.embedding_dim, config.lstm_hidden, config.num_layers, bidirectional=True, batch_first=True)
         self.lstm2 = nn.LSTM(config.embedding_dim, config.lstm_hidden, config.num_layers, bidirectional=True, batch_first=True)
-        self.fc = MLPClassification(config.lstm_hidden*4, config.num_classes)
+        self.fc = MLPClassification(config.mlp_dim, config.num_classes)
 
     def forward(self, inputs):
         x1, x2 = inputs
@@ -20,6 +20,6 @@ class LSTM(BaseModel):
         o1 = o1[:, -1, :]
         o2, _ = self.lstm2(x2)
         o2 = o2[:, -1, :]
-        o = torch.cat([o1, o2], -1)
+        o = F.dropout(torch.cat([o1, o2], -1))
         out = self.fc(o)
         return out

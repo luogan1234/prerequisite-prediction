@@ -9,8 +9,7 @@ class TextCNN(BaseModel):
     def __init__(self, config):
         super().__init__(config)
         self.convs = nn.ModuleList([nn.Conv2d(1, config.num_filters, (k, config.embedding_dim)) for k in config.filter_sizes])
-        self.dropout = nn.Dropout(config.dropout)
-        self.fc = MLPClassification(config.num_filters*len(config.filter_sizes), config.num_classes)
+        self.fc = MLPClassification(config.mlp_dim, config.num_classes)
 
     def conv_and_pool(self, x, conv):
         x = F.relu(conv(x)).squeeze(3)
@@ -22,6 +21,6 @@ class TextCNN(BaseModel):
         x0 = self.embedding(x0)
         x0 = x0.unsqueeze(1)
         conv_out = torch.cat([self.conv_and_pool(x0, conv) for conv in self.convs], 1)
-        out = self.dropout(conv_out)
+        out = F.dropout(conv_out)
         out = self.fc(out)
         return out

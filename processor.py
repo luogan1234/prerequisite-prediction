@@ -114,6 +114,8 @@ class Processor(object):
         return p, r, f1
 
     def run(self, output_res):
+        model = name_to_model(self.model_name, self.config)
+        print('model parameters number: {}'.format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
         ps, rs, f1s = [], [], []
         for split in range(self.config.total_splits):
             p, r, f1 = self.run_split(split)

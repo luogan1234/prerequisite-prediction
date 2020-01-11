@@ -2,12 +2,12 @@ import numpy as np
 import torch
 
 class Config:
-    def __init__(self, store):
+    def __init__(self, store, embedding_dim, mlp_dim):
         self.use_wiki = store.use_wiki
         
-        self.embeddings = store.embeddings
-        self.concept_embeddings = store.concept_embeddings
-        self.embedding_dim = store.embeddings.shape[1]
+        self.embedding_dim = embedding_dim
+        self.embeddings = store.embeddings[:, :embedding_dim]
+        self.concept_embeddings = store.concept_embeddings[:, :embedding_dim]
         self.epochs = None
         self.batch_size = 64
         self.lr = 1e-3
@@ -16,26 +16,23 @@ class Config:
         self.total_splits = 10
         self.save_dir = None
         
+        self.mlp_dim = mlp_dim  # MLP
         self.dropout = 0.5
-        self.filter_sizes = (3, 5)  # CNN
-        self.num_filters = 64  # CNN
-        self.lstm_hidden = 32  # RNN
-        self.num_layers = 1  # RNN
-        #self.graph = np.array(store.graph, dtype=np.float32)
-        self.laplacian1 = self.to_laplacian_matrix(store.graph.T)
-        self.laplacian2 = self.to_laplacian_matrix(store.graph)
-        self.gcn_hidden = 64  # GCN
-        self.mlp_dim = 64  # MLP
+        self.filter_sizes = (2, 4)  # CNN
+        self.num_filters = self.mlp_dim // len(self.filter_sizes) # CNN
+        self.lstm_hidden = self.mlp_dim // 4  # LSTM
+        self.num_layers = 1  # LSTM
+        gcn_number = store.graph.shape[0]
+        self.gcn_hidden = self.mlp_dim // gcn_number  # GCN
+        self.laplacians1 = [self.to_laplacian_matrix(store.graph[i, :, :]).T for i in range(gcn_number)]
+        self.laplacians2 = [self.to_laplacian_matrix(store.graph[i, :, :]) for i in range(gcn_number)]
     
     def to_laplacian_matrix(self, graph):
         a = np.eye(graph.shape[0]) - graph
-        d1 = np.power(np.sum(np.abs(a), 1), -0.5)
-        d1[np.isinf(d1)] = 0
-        d1 = np.diag(d1)
-        d2 = np.power(np.sum(np.abs(a), 0), -0.5)
-        d2[np.isinf(d2)] = 0
-        d2 = np.diag(d2)
-        laplacian = np.matmul(np.matmul(d1, a), d2)
+        d = np.power(np.sum(np.abs(a), 0), -1)
+        d[np.isinf(d)] = 0
+        d = np.diag(d)
+        laplacian = np.matmul(d, a)
         laplacian = self.to_torch(np.array(laplacian, dtype=np.float32))
         return laplacian
     

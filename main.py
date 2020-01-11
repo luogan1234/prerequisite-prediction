@@ -13,7 +13,9 @@ def main():
     parser.add_argument('-max_sentence_length', type=int, default=100)
     parser.add_argument('-use_wiki', action='store_true')
     parser.add_argument('-use_cpu', action='store_true')
-    parser.add_argument('-epochs', type=int, default=50)
+    parser.add_argument('-embedding_dim', type=int, default=16)
+    parser.add_argument('-mlp_dim', type=int, default=24)
+    parser.add_argument('-epochs', type=int, default=500)
     args = parser.parse_args()
     if args.dataset in ['moocen']:
         lang = 'en'
@@ -30,7 +32,7 @@ def main():
         store = DataHandler(args.dataset, args.model, lang, args.use_wiki, args.max_term_length, args.max_sentence_length)
         with open(store_path, 'wb') as f:
             pickle.dump(store, f)
-    config = Config(store)
+    config = Config(store, args.embedding_dim, args.mlp_dim)
     config.epochs = args.epochs
     if args.use_cpu:
         config.use_gpu = False
