@@ -9,9 +9,9 @@ class MLP(BaseModel):
     def __init__(self, config):
         super().__init__(config)
         self.concept_embedding = nn.Embedding.from_pretrained(torch.tensor(config.concept_embeddings), freeze=True)
-        self.fc1 = nn.Linear(config.embedding_dim, config.mlp_dim // 2)
-        self.fc2 = nn.Linear(config.embedding_dim, config.mlp_dim // 2)
-        self.fc = MLPClassification(config.mlp_dim, config.num_classes)
+        self.fc1 = nn.Linear(config.embedding_dim, config.feature_dim // 2)
+        self.fc2 = nn.Linear(config.embedding_dim, config.feature_dim // 2)
+        self.fc = MLPClassification(config.feature_dim, config.num_classes)
 
     def forward(self, inputs):
         x1, x2 = inputs
