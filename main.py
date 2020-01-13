@@ -31,10 +31,10 @@ def main():
         lang = 'en'
     if args.dataset in ['mooczh']:
         lang = 'zh'
-    if not os.path.exists('tmp/'):
-        os.path.mkdir('tmp/')
+    #if not os.path.exists('tmp/'):
+    #    os.mkdir('tmp/')
     if not os.path.exists('result/'):
-        os.path.mkdir('result/')
+        os.mkdir('result/')
     '''
     store_path = 'tmp/{}_{}_{}_{}_{}.pkl'.format(args.dataset, lang, args.use_wiki, args.max_term_length, args.max_sentence_length)
     if os.path.exists(store_path):
