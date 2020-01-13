@@ -112,8 +112,6 @@ class DataHandler:
                         group.append([[np.concatenate([i0, self.to_index(['SEP']), i1], axis=0)], i])
                     if self.model_name == 'GCN':
                         group.append([[i2, i3], i])
-                    if self.model_name == 'GCN_LSTM':
-                        group.append([[i0, i1, i2, i3], i])
                     if self.model_name == 'MLP':
                         group.append([[i2, i3], i])
             if s != split:

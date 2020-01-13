@@ -17,10 +17,9 @@ class Config:
         self.save_dir = None
         
         self.mlp_dim = mlp_dim  # MLP
-        self.dropout = 0.5
         self.filter_sizes = (2, 4)  # CNN
         self.num_filters = self.mlp_dim // len(self.filter_sizes) # CNN
-        self.lstm_hidden = self.mlp_dim // 4  # LSTM
+        self.lstm_hidden = self.mlp_dim // 6  # LSTM
         self.num_layers = 1  # LSTM
         gcn_number = store.graph.shape[0]
         self.gcn_hidden = self.mlp_dim // gcn_number  # GCN

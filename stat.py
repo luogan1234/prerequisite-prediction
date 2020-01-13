@@ -3,9 +3,8 @@ import os
 
 def eval():
     files = os.listdir('result/')
+    files.sort()
     for file in files:
-        if 'mooczh' not in file or 'GCN' not in file:
-            continue
         ps, rs, f1s = [], [], []
         with open('result/'+file, 'r', encoding='utf-8') as f:
             data = f.read().split('\n')[1:]

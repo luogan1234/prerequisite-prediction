@@ -10,10 +10,11 @@ class MLPClassification(nn.Module):
         self.out_features = out_features
         self.fc1 = nn.Linear(in_features, in_features // 4)
         self.fc2 = nn.Linear(in_features // 4, out_features)
-        self.dropout = nn.Dropout(0.5)
+        self.dropout = nn.Dropout(0.2)
 
     def forward(self, input):
-        x = self.dropout(F.relu(self.fc1(input)))
+        input = self.dropout(input)
+        x = F.relu(self.fc1(input))
         x = self.fc2(x)
         return x
     

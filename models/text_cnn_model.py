@@ -20,7 +20,6 @@ class TextCNN(BaseModel):
         [x0] = inputs
         x0 = self.embedding(x0)
         x0 = x0.unsqueeze(1)
-        conv_out = torch.cat([self.conv_and_pool(x0, conv) for conv in self.convs], 1)
-        out = F.dropout(conv_out)
+        out = torch.cat([self.conv_and_pool(x0, conv) for conv in self.convs], 1)
         out = self.fc(out)
         return out

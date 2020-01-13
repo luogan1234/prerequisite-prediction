@@ -12,7 +12,6 @@ import random
 from models.lstm_model import LSTM
 from models.text_cnn_model import TextCNN
 from models.gcn_model import GCN
-from models.gcn_lstm_model import GCN_LSTM
 from models.mlp_model import MLP
 
 def name_to_model(name, config):
@@ -22,8 +21,6 @@ def name_to_model(name, config):
         return TextCNN(config)
     if name == 'GCN':
         return GCN(config)
-    if name == 'GCN_LSTM':
-        return GCN_LSTM(config)
     if name == 'MLP':
         return MLP(config)
     raise NotImplementedError
@@ -113,7 +110,7 @@ class Processor(object):
         #print(confusion)
         return p, r, f1
 
-    def run(self, output_res):
+    def run(self, output):
         model = name_to_model(self.model_name, self.config)
         print('model parameters number: {}'.format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
         ps, rs, f1s = [], [], []
@@ -122,13 +119,15 @@ class Processor(object):
             ps.append(p)
             rs.append(r)
             f1s.append(f1)
-            if output_res:
-                result_path = 'result/{}_{}_{}.txt'.format(self.model_name, self.store.dataset, self.config.epochs)
-                if not os.path.exists(result_path):
-                    with open(result_path, 'w', encoding='utf-8') as f:
-                        f.write('p\tr\tf1\tsplit\tuse_wiki\n')
-                with open(result_path, 'a', encoding='utf-8') as f:
-                    f.write('{:.3f}\t{:.3f}\t{:.3f}\t{}\t{}\n'.format(p, r, f1, split, self.config.use_wiki))
+            if not output:
+                result_path = 'result/{}_{}_{}_{}_{}.txt'.format(self.model_name, self.store.dataset, self.config.epochs, self.config.embedding_dim, self.config.feature_dim)
+            else:
+                result_path = 'result/{}'.format(output)
+            if not os.path.exists(result_path):
+                with open(result_path, 'w', encoding='utf-8') as f:
+                    f.write('p\tr\tf1\tsplit\tuse_wiki\n')
+            with open(result_path, 'a', encoding='utf-8') as f:
+                f.write('{:.3f}\t{:.3f}\t{:.3f}\t{}\t{}\n'.format(p, r, f1, split, self.config.use_wiki))
         ave_p = np.mean(ps)
         ave_r = np.mean(rs)
         ave_f1 = np.mean(f1s)

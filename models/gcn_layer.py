@@ -21,7 +21,7 @@ class GraphConvolution(nn.Module):
             x = torch.mm(self.laplacians[i], torch.mm(input, self.weights[i]))
             x = torch.index_select(x, 0, index)
             out.append(x)
-        out = F.dropout(torch.cat(out, -1))
+        out = torch.cat(out, -1)
         return out
     
     def __repr__(self):

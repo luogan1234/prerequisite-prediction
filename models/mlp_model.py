@@ -19,6 +19,6 @@ class MLP(BaseModel):
         o1 = F.relu(self.fc1(o1))
         o2 = self.concept_embedding(x2)
         o2 = F.relu(self.fc2(o2))
-        o = F.dropout(torch.cat([o1, o2], -1))
+        o = torch.cat([o1, o2], -1)
         out = self.fc(o)
         return out
