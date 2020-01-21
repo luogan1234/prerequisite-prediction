@@ -8,48 +8,37 @@ import torch
 import random
 import numpy as np
 
-def main():
-    random.seed(0)
-    np.random.seed(0)
-    torch.manual_seed(0)
-    torch.cuda.manual_seed_all(0)
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.enabled = False
     torch.backends.cudnn.deterministic = True
+
+def main():
     parser = argparse.ArgumentParser(description='Prerequisite prediction')
-    parser.add_argument('-model', type=str, required=True, choices=['LSTM', 'TextCNN', 'GCN', 'MLP'], help='LSTM | TextCNN | GCN | MLP')
+    parser.add_argument('-model', type=str, required=True, choices=['LSTM', 'TextCNN', 'GCN'], help='LSTM | TextCNN | GCN')
     parser.add_argument('-dataset', type=str, required=True, choices=['mooczh', 'moocen'], help='mooczh | moocen')
     parser.add_argument('-max_term_length', type=int, default=7)
     parser.add_argument('-max_sentence_length', type=int, default=100)
-    parser.add_argument('-use_wiki', action='store_true')
     parser.add_argument('-use_cpu', action='store_true')
-    parser.add_argument('-embedding_dim', type=int, default=20)
-    parser.add_argument('-feature_dim', type=int, default=18)
-    parser.add_argument('-epochs', type=int, default=500)
+    parser.add_argument('-embedding_dim', type=int, default=36)
+    parser.add_argument('-feature_dim', type=int, default=36)
+    parser.add_argument('-max_epochs', type=int, default=500)
+    parser.add_argument('-seed', type=int, default=0)
+    parser.add_argument('-graph', type=str, default='graph.npy')
     parser.add_argument('-output', type=str, default=None)
     args = parser.parse_args()
+    set_seed(args.seed)
     if args.dataset in ['moocen']:
         lang = 'en'
     if args.dataset in ['mooczh']:
         lang = 'zh'
-    #if not os.path.exists('tmp/'):
-    #    os.mkdir('tmp/')
     if not os.path.exists('result/'):
         os.mkdir('result/')
-    '''
-    store_path = 'tmp/{}_{}_{}_{}_{}.pkl'.format(args.dataset, lang, args.use_wiki, args.max_term_length, args.max_sentence_length)
-    if os.path.exists(store_path):
-        with open(store_path, 'rb') as f:
-            store = pickle.load(f)
-        store.model_name = args.model
-    else:
-    '''
-    store = DataHandler(args.dataset, args.model, lang, args.use_wiki, args.max_term_length, args.max_sentence_length)
-    #with open(store_path, 'wb') as f:
-    #    pickle.dump(store, f)
-    config = Config(store, args.embedding_dim, args.feature_dim)
-    config.epochs = args.epochs
-    if args.use_cpu:
-        config.use_gpu = False
+    store = DataHandler(args.dataset, args.model, lang, args.max_term_length, args.max_sentence_length, args.graph)
+    config = Config(store, args.embedding_dim, args.feature_dim, args.max_epochs, args.use_cpu)
     processor = Processor(args.model, store, config)
     processor.run(args.output)
 

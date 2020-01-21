@@ -8,8 +8,8 @@ class MLPClassification(nn.Module):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.fc1 = nn.Linear(in_features, in_features // 4)
-        self.fc2 = nn.Linear(in_features // 4, out_features)
+        self.fc1 = nn.Linear(in_features, in_features // 2)
+        self.fc2 = nn.Linear(in_features // 2, out_features)
         self.dropout = nn.Dropout(0.2)
 
     def forward(self, input):
