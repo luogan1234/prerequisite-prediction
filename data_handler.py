@@ -93,8 +93,6 @@ class DataHandler:
                         group.append([[np.concatenate([i0, i1], axis=0)], i])
                     if self.model_name == 'GCN':
                         group.append([[i2, i3], i])
-                    if self.model_name == 'MLP':
-                        group.append([[i2, i3], i])
             if s not in [eval_split, test_split]:
                 train.extend(group)
             if s == eval_split:
