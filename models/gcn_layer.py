@@ -11,15 +11,16 @@ class GraphConvolution(nn.Module):
         self.out_features = out_features
         self.gcn_number = len(laplacians)
         self.laplacians = laplacians
-        self.weights = nn.Parameter(torch.FloatTensor(self.gcn_number, in_features, out_features))
-        stdv = 1. / math.sqrt(out_features)
-        self.weights.data.uniform_(-stdv, stdv)
+        w = torch.empty(self.gcn_number, in_features, out_features)
+        std = 1. / math.sqrt(out_features)
+        nn.init.uniform_(w, -std, std)
+        self.weights = nn.Parameter(w)
     
     def forward(self, input, index):
         out = []
         for i in range(self.gcn_number):
             x = torch.mm(self.laplacians[i], torch.mm(input, self.weights[i]))
-            x = torch.index_select(x, 0, index)
+            x = x.index_select(0, index)
             out.append(x)
         out = torch.cat(out, -1)
         return out

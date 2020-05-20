@@ -6,7 +6,8 @@ import numpy as np
 class BaseModel(nn.Module):
     def __init__(self, config):
         super(BaseModel, self).__init__()
-        self.embedding = nn.Embedding.from_pretrained(torch.tensor(config.embeddings))
+        self.concept_embedding = config.concept_embedding.cuda()
+        self.token_embedding = config.token_embedding.cuda()
     
     def forward(self, data):
         raise NotImplementedError

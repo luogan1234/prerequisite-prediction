@@ -2,8 +2,8 @@ for alpha in 0.1 0.3 0.5 0.7 0.9; do
   cmd="python build_graph.py -dataset moocen -alpha $alpha"
   echo $cmd
   $cmd
-  for seed in {0..4}; do
-    cmd="python main.py -dataset moocen -model GCN -output alpha_en.txt -seed $seed"
+  for seed in {0..3}; do
+    cmd="python main.py -dataset moocen -model GCN -result_path alpha_en.txt -seed $seed"
     echo $cmd
     $cmd
   done
@@ -13,9 +13,9 @@ done
 cmd="python build_graph.py -dataset moocen"
 echo $cmd
 $cmd
-for feature_dim in 6 12 24 36 48; do
-  for seed in {0..4}; do
-    cmd="python main.py -dataset moocen -model GCN -feature_dim $feature_dim -output feature_en.txt -seed $seed"
+for feature_dim in 4 8 16 24 32; do
+  for seed in {0..3}; do
+    cmd="python main.py -dataset moocen -model GCN -feature_dim $feature_dim -result_path feature_en.txt -seed $seed"
     echo $cmd
     $cmd
   done

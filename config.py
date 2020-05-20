@@ -2,41 +2,31 @@ import numpy as np
 import torch
 
 class Config:
-    def __init__(self, store, embedding_dim, feature_dim, max_epochs, use_cpu):
-        self.use_gpu = not use_cpu
+    def __init__(self, store, feature_dim):
+        self.embedding_dim = 36
+        self.concept_embedding = store.concept_embedding[:, :self.embedding_dim]
+        self.token_embedding = store.token_embedding[:, :, :self.embedding_dim]
         
-        self.embedding_dim = embedding_dim
-        self.embeddings = store.embeddings[:, :embedding_dim]
-        self.concept_embeddings = store.concept_embeddings[:, :embedding_dim]
-        self.max_epochs = max_epochs
-        self.early_stop_time = 50
-        self.min_check_epoch = 100
-        self.batch_size = 64
+        self.max_epochs = 500
+        self.early_stop_time = 10
+        self.min_check_epoch = 5
+        self.batch_size = 32
         self.lr = 1e-3
-        self.num_classes = store.num_classes
+        self.num_classes = 2
         self.total_splits = 10
         
         self.feature_dim = feature_dim
-        self.filter_sizes = (2, 4)  # CNN
-        self.num_filters = self.feature_dim // len(self.filter_sizes) # CNN
-        self.lstm_hidden = self.feature_dim // 2  # LSTM
-        self.num_layers = 1  # LSTM
-        self.gcn_hidden = self.feature_dim // 2  # GCN
+        self.filter_sizes = (2, 4)  # TextCNN
+        assert feature_dim % len(self.filter_sizes) == 0
         gcn_number = store.graph.shape[0]
         self.laplacians1 = [self.to_laplacian_matrix(store.graph[i, :, :]).T for i in range(gcn_number)]
         self.laplacians2 = [self.to_laplacian_matrix(store.graph[i, :, :]) for i in range(gcn_number)]
     
     def to_laplacian_matrix(self, graph):
         a = np.eye(graph.shape[0]) + graph
-        d = np.power(np.sum(np.abs(a), 0), -1)
+        d = np.power(np.sum(np.abs(a), 1), -1)
         d[np.isinf(d)] = 0
         d = np.diag(d)
-        laplacian = np.matmul(d, a)
-        laplacian = self.to_torch(np.array(laplacian, dtype=np.float32))
+        laplacian = np.array(np.matmul(d, a), dtype=np.float32)
+        laplacian = torch.from_numpy(laplacian).cuda()
         return laplacian
-    
-    def to_torch(self, x):
-        if self.use_gpu:
-            return torch.from_numpy(x).cuda()
-        else:
-            return torch.from_numpy(x)

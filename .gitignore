@@ -126,7 +126,9 @@ venv.bak/
 dmypy.json
 dataset/
 tmp/
+model_states/
 result/
+predictions/
 *.zip
 
 # Pyre type checker

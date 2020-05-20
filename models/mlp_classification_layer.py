@@ -7,14 +7,16 @@ class MLPClassification(nn.Module):
     def __init__(self, in_features, out_features):
         super().__init__()
         self.in_features = in_features
+        mid_features = in_features // 2
         self.out_features = out_features
-        self.fc1 = nn.Linear(in_features, in_features // 2)
-        self.fc2 = nn.Linear(in_features // 2, out_features)
+        self.fc1 = nn.Linear(in_features, mid_features)
+        self.fc2 = nn.Linear(mid_features, out_features)
         self.dropout = nn.Dropout(0.2)
 
     def forward(self, input):
         input = self.dropout(input)
         x = F.relu(self.fc1(input))
+        x = self.dropout(x)
         x = self.fc2(x)
         return x
     

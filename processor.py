@@ -10,7 +10,7 @@ import numpy as np
 import tqdm
 import random
 from models.lstm_model import LSTM
-from models.text_cnn_model import TextCNN
+from models.textcnn_model import TextCNN
 from models.gcn_model import GCN
 
 def name_to_model(name, config):
@@ -22,14 +22,15 @@ def name_to_model(name, config):
         return GCN(config)
     raise NotImplementedError
 
-class Processor(object):
-    def __init__(self, model_name, store, config):
+class Processor:
+    def __init__(self, model_name, data_loader, config):
         self.model_name = model_name
-        self.store = store
+        self.dataset = data_loader.dataset
+        self.data_loader = data_loader
         self.config = config
     
     def train_one_step(self, inputs, labels):
-        labels = self.config.to_torch(labels)
+        labels = torch.tensor(labels, dtype=torch.long).cuda()
         self.optimizer.zero_grad()
         outputs = self.model(inputs)
         loss = F.cross_entropy(outputs, labels)
@@ -38,24 +39,23 @@ class Processor(object):
         return loss.item()
     
     def eval_one_step(self, inputs, labels):
-        labels = self.config.to_torch(labels)
+        labels = torch.tensor(labels, dtype=torch.long).cuda()
         with torch.no_grad():
             outputs = self.model(inputs)
             loss = F.cross_entropy(outputs, labels)
             predicts = torch.max(outputs.data, 1)[1].cpu().numpy()
         return predicts, loss
     
+    def predict_one_step(self, inputs, labels):
+        labels = torch.tensor(labels, dtype=torch.long).cuda()
+        with torch.no_grad():
+            outputs = self.model(inputs)
+            predicts = F.softmax(outputs, -1).cpu().numpy()
+        return predicts
+    
     def get_batch_data(self, data):
-        inputs, labels = [], []
-        for i in range(len(data[0][0])):
-            inputs.append([])
-        for sample in data:
-            input, label = sample
-            for i in range(len(input)):
-                inputs[i].append(input[i])
-            labels.append(label)
-        inputs = [self.config.to_torch(np.array(input)) for input in inputs]
-        labels = np.array(labels, dtype=np.int64)
+        inputs, labels = [datum['input'] for datum in data], [datum['label'] for datum in data]
+        inputs = torch.tensor(inputs, dtype=torch.long).cuda()
         return inputs, labels
     
     def evaluate(self, data):
@@ -69,8 +69,8 @@ class Processor(object):
             predicts, loss = self.eval_one_step(inputs, labels)
             labels_all = np.append(labels_all, labels)
             predicts_all = np.append(predicts_all, predicts)
-            eval_loss += loss
-        eval_loss /= eval_steps
+            eval_loss += loss * len(labels)
+        eval_loss /= len(data)
         self.model.train()
         acc = metrics.accuracy_score(labels_all, predicts_all)
         p = metrics.precision_score(labels_all, predicts_all, average='binary')
@@ -78,14 +78,14 @@ class Processor(object):
         f1 = metrics.f1_score(labels_all, predicts_all, average='binary')
         return eval_loss, acc, p, r, f1
     
-    def run_split(self, split):
+    def run_split(self, split, output_model):
         print("Split {} starts, use model {}".format(split, self.model_name))
         self.model = name_to_model(self.model_name, self.config)
-        if self.config.use_gpu:
-            self.model.cuda()
+        self.model.cuda()
         best_para = self.model.state_dict()
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.lr)
-        train, eval, test = self.store.prepare_data(split, self.config.total_splits)
+        train, eval, test = self.data_loader.prepare_data(split, self.config.total_splits)
+        random.shuffle(train)
         train_steps = (len(train) - 1) // self.config.batch_size + 1
         training_tqdm = tqdm.tqdm(range(self.config.max_epochs))
         training_tqdm.set_description("Epoch %d | train_loss: %.3f eval_loss: %.3f" % (0, 0, 0))
@@ -93,12 +93,11 @@ class Processor(object):
         patience = 0
         for epoch in training_tqdm:
             train_loss = 0.0
-            random.shuffle(train)
             for i in range(train_steps):
                 inputs, labels = self.get_batch_data(train[i*self.config.batch_size: (i+1)*self.config.batch_size])
                 loss = self.train_one_step(inputs, labels)
-                train_loss += loss
-            train_loss /= train_steps
+                train_loss += loss * len(labels)
+            train_loss /= len(train)
             eval_loss, acc, p, r, f1 = self.evaluate(eval)
             training_tqdm.set_description("Epoch %d | train_loss: %.3f eval_loss: %.3f" % (epoch, train_loss, eval_loss))
             if eval_loss < min_eval_loss:
@@ -111,23 +110,26 @@ class Processor(object):
                 break
         print('Split {} train finished, min eval loss {:.3f}, stop at {} epochs'.format(split, min_eval_loss, epoch))
         self.model.load_state_dict(best_para)
+        if output_model:
+            with open('model_states/{}_{}_{}.pth'.format(self.model_name, self.dataset, split), 'wb') as f:
+                torch.save(best_para, f)
         test_loss, acc, p, r, f1 = self.evaluate(test)
         print('Split {} test finished, test loss {:.3f} acc {:.3f} p {:.3f} r {:.3f} f1 {:.3f}'.format(split, test_loss, acc, p, r, f1))
         return p, r, f1
 
-    def run(self, output):
+    def run(self, _result_path, output_model):
         model = name_to_model(self.model_name, self.config)
         print('model parameters number: {}'.format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
         ps, rs, f1s = [], [], []
         for split in range(self.config.total_splits):
-            p, r, f1 = self.run_split(split)
+            p, r, f1 = self.run_split(split, output_model)
             ps.append(p)
             rs.append(r)
             f1s.append(f1)
-            if not output:
-                result_path = 'result/{}_{}_{}_{}.txt'.format(self.model_name, self.store.dataset, self.config.embedding_dim, self.config.feature_dim)
+            if not _result_path:
+                result_path = 'result/{}_{}_{}.txt'.format(self.model_name, self.dataset, self.config.embedding_dim)
             else:
-                result_path = 'result/{}'.format(output)
+                result_path = 'result/{}'.format(_result_path)
             if not os.path.exists(result_path):
                 with open(result_path, 'w', encoding='utf-8') as f:
                     f.write('p\tr\tf1\tsplit\n')
@@ -137,4 +139,33 @@ class Processor(object):
         ave_r = np.mean(rs)
         ave_f1 = np.mean(f1s)
         print('average p {:.3f}, average r {:.3f}, average f1 {:.3f}'.format(ave_p, ave_r, ave_f1))
-        
+    
+    def predict(self):
+        data = self.data_loader.prepare_all_pair()
+        for datum in data:
+            datum['predict'] = np.zeros(self.config.num_classes)
+        tot = 0
+        for split in range(self.config.total_splits):
+            file = 'model_states/{}_{}_{}.pth'.format(self.model_name, self.dataset, split)
+            if not os.path.exists(file):
+                continue
+            print('Predict split {}'.format(split))
+            tot += 1
+            self.model = name_to_model(self.model_name, self.config)
+            with open(file, 'rb') as f:
+                best_para = torch.load(f)
+                self.model.load_state_dict(best_para)
+            self.model.cuda()
+            self.model.eval()
+            steps = (len(data) - 1) // self.config.batch_size + 1
+            for i in tqdm.tqdm(range(steps)):
+                inputs, labels = self.get_batch_data(data[i*self.config.batch_size: (i+1)*self.config.batch_size])
+                predicts = self.predict_one_step(inputs, labels)
+                for j in range(len(predicts)):
+                    data[i*self.config.batch_size+j]['predict'] += predicts[j]
+        if not tot:
+            return []
+        else:
+            for datum in data:
+                datum['predict'] /= tot
+        return data
