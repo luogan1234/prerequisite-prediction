@@ -15,7 +15,7 @@ class GCN(BaseModel):
         self.fc = MLPClassification(config.feature_dim*self.gcn_number, config.num_classes)
 
     def forward(self, inputs):
-        i1, i2 = inputs[:, 0], inputs[:, 1]
+        i1, i2 = inputs['i1'], inputs['i2']
         o1 = F.relu(self.gc1(self.concept_embedding, i1))
         o2 = F.relu(self.gc2(self.concept_embedding, i2))
         o = torch.cat([o1, o2], -1)

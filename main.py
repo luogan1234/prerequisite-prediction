@@ -18,7 +18,7 @@ def set_seed(seed):
 
 def main():
     parser = argparse.ArgumentParser(description='Prerequisite prediction')
-    parser.add_argument('-model', type=str, required=True, choices=['LSTM', 'TextCNN', 'GCN'])
+    parser.add_argument('-model', type=str, required=True, choices=['LSTM', 'LSTM_S', 'LSTM_GCN', 'TextCNN', 'GCN'])
     parser.add_argument('-dataset', type=str, required=True, choices=['moocen', 'mooczh'])
     parser.add_argument('-max_term_length', type=int, default=7)
     parser.add_argument('-feature_dim', type=int, default=24)

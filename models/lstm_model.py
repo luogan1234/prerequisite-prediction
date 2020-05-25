@@ -13,7 +13,7 @@ class LSTM(BaseModel):
         self.fc = MLPClassification(config.feature_dim*2, config.num_classes)
 
     def forward(self, inputs):
-        i1, i2 = inputs[:, 0], inputs[:, 1]
+        i1, i2 = inputs['i1'], inputs['i2']
         x1 = self.token_embedding.index_select(0, i1)
         x2 = self.token_embedding.index_select(0, i2)
         o1, _ = self.lstm1(x1)

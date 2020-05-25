@@ -10,12 +10,18 @@ import numpy as np
 import tqdm
 import random
 from models.lstm_model import LSTM
+from models.lstm_s_model import LSTM_S
+from models.lstm_gcn_model import LSTM_GCN
 from models.textcnn_model import TextCNN
 from models.gcn_model import GCN
 
 def name_to_model(name, config):
     if name == 'LSTM':
         return LSTM(config)
+    if name == 'LSTM_S':
+        return LSTM_S(config)
+    if name == 'LSTM_GCN':
+        return LSTM_GCN(config)
     if name == 'TextCNN':
         return TextCNN(config)
     if name == 'GCN':
@@ -54,8 +60,14 @@ class Processor:
         return predicts
     
     def get_batch_data(self, data):
-        inputs, labels = [datum['input'] for datum in data], [datum['label'] for datum in data]
-        inputs = torch.tensor(inputs, dtype=torch.long).cuda()
+        i1 = [datum['i1'] for datum in data]
+        i1 = torch.tensor(i1, dtype=torch.long).cuda()
+        i2 = [datum['i2'] for datum in data]
+        i2 = torch.tensor(i2, dtype=torch.long).cuda()
+        f = [datum['f'] for datum in data]
+        f = torch.tensor(f, dtype=torch.float).cuda()
+        labels = [datum['label'] for datum in data]
+        inputs = {'i1': i1, 'i2': i2, 'f': f}
         return inputs, labels
     
     def evaluate(self, data):

@@ -7,7 +7,7 @@ import os
 
 def main():
     parser = argparse.ArgumentParser(description='Postprocess')
-    parser.add_argument('-model', type=str, required=True, choices=['LSTM', 'TextCNN', 'GCN'])
+    parser.add_argument('-model', type=str, required=True, choices=['LSTM', 'LSTM_S', 'LSTM_GCN', 'TextCNN', 'GCN'])
     parser.add_argument('-dataset', type=str, required=True, choices=['moocen', 'mooczh'])
     parser.add_argument('-max_term_length', type=int, default=7)
     parser.add_argument('-feature_dim', type=int, default=24)
@@ -25,7 +25,7 @@ def main():
     if predicts:
         with open('predictions/{}_{}.json'.format(args.model, args.dataset), 'w', encoding='utf-8') as f:
             for pred in predicts:
-                obj = {'c1': data_loader.concepts[pred['input'][0]], 'c2': data_loader.concepts[pred['input'][1]], 'label': pred['label'], 'predict': pred['predict'].tolist()}
+                obj = {'c1': data_loader.concepts[pred['i1']], 'c2': data_loader.concepts[pred['i2']], 'label': pred['label'], 'predict': pred['predict'].tolist()}
                 f.write(json.dumps(obj, ensure_ascii=False)+'\n')
 
 if __name__ == '__main__':

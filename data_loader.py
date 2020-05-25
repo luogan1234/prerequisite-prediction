@@ -23,13 +23,18 @@ class DataLoader:
             for line in data:
                 if line:
                     s = line.split('\t')
-                    self.inputs[int(s[2])].append([self.concepts.index(s[0]), self.concepts.index(s[1])])
+                    self.inputs[int(s[2])].append({'i1': self.concepts.index(s[0]), 'i2': self.concepts.index(s[1])})
+        n = len(self.concepts)
         graph_path = os.path.join(dataset_path, 'graph.npy')
         if os.path.exists(graph_path):
             self.graph = np.load(graph_path)
         else:
-            n = len(self.concepts)
-            self.graph = np.zeros((n, n))
+            self.graph = np.eye(n)
+        feature_path = os.path.join(dataset_path, 'user_feature.npy')
+        if os.path.exists(feature_path):
+            self.user_feature = np.load(feature_path)
+        else:
+            self.user_feature = np.zeros((0, n, n))
         print('data loader init finished.')
     
     def load_embedding(self):
@@ -87,7 +92,8 @@ class DataLoader:
                 n = len(self.inputs[label])
                 split_size = (n-1) // total_splits + 1
                 for input in self.inputs[label][i*split_size: (i+1)*split_size]:
-                    group.append({'input': input, 'label': label})
+                    feature = self.user_feature[:, input['i1'], input['i2']]
+                    group.append({'i1': input['i1'], 'i2': input['i2'], 'f': feature, 'label': label})
             if i not in [eval_split, test_split]:
                 train.extend(group)
             if i == eval_split:
@@ -102,9 +108,10 @@ class DataLoader:
         match = [[-1]*n for i in range(n)]
         for label in range(len(self.inputs)):
             for input in self.inputs[label]:
-                match[input[0]][input[1]] = label
+                match[input['i1']][input['i2']] = label
         for i in range(n):
             for j in range(n):
                 if i != j:
-                    data.append({'input': [i, j], 'label': match[i][j]})
+                    feature = self.user_feature[:, i, j]
+                    data.append({'i1': i, 'i2': j, 'f': feature, 'label': match[i][j]})
         return data

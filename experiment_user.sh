@@ -1,3 +1,23 @@
+cmd="python build_graph.py -dataset mooczh"
+echo $cmd
+$cmd
+for seed in {0..3}; do
+  cmd="python main.py -dataset mooczh -model LSTM_GCN -result_path user.txt -seed $seed"
+  echo $cmd
+  $cmd
+done
+mv result/user.txt result/LSTM_GCN_mooczh.txt
+
+cmd="python build_graph.py -dataset mooczh -no_video_order -no_course_dependency"
+echo $cmd
+$cmd
+for seed in {0..3}; do
+  cmd="python main.py -dataset mooczh -model LSTM_GCN -result_path user.txt -seed $seed"
+  echo $cmd
+  $cmd
+done
+mv result/user.txt result/LSTM_GCN_mooczh_novc.txt
+
 for user_num in 0 25 50 100 250 500; do
   for seed in {0..3}; do
     cmd="python build_graph.py -dataset mooczh -no_video_order -no_course_dependency -user_num $user_num -seed $seed"

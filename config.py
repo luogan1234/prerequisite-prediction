@@ -21,6 +21,7 @@ class Config:
         gcn_number = store.graph.shape[0]
         self.laplacians1 = [self.to_laplacian_matrix(store.graph[i, :, :]).T for i in range(gcn_number)]
         self.laplacians2 = [self.to_laplacian_matrix(store.graph[i, :, :]) for i in range(gcn_number)]
+        self.user_feature_dim = store.user_feature.shape[0]
     
     def to_laplacian_matrix(self, graph):
         a = np.eye(graph.shape[0]) + graph
