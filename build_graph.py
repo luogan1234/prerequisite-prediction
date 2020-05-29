@@ -14,7 +14,7 @@ def add_edge(graph, c1s, c2s, d):
                 if c1 != c2:
                     graph[c1][c2] += d
 
-def build_concept_graph(dataset, alpha, video_order, course_dependency, user_act, user_prop, user_num, user_act_type):
+def build_concept_graph(dataset, alpha, video_order, course_dependency, user_act, user_prop, user_num, user_act_type, no_weight):
     labels = [video_order, course_dependency, user_act]
     prefix = 'dataset/{}/'.format(dataset)
     concepts = []
@@ -129,6 +129,9 @@ def build_concept_graph(dataset, alpha, video_order, course_dependency, user_act
             print('(video graph) graph {}, covered edge proportion: {:.3f}, total edge weight: {:.3f}'.format(k, len(vgraph[k][vgraph[k]>0]) / (vn*vn), np.sum(vgraph[k][vgraph[k]>0])))
             print('(concept graph) graph {}, covered edge proportion: {:.3f}, total edge weight: {:.3f}'.format(k, len(cgraph[k][cgraph[k]>0]) / (cn*cn), np.sum(cgraph[k])))
             graphs.append(cgraph[k])
+    if no_weight:
+        for graph in graphs:
+            graph[graph>0] = 1
     np.save(prefix+'graph.npy', np.array(graphs))
 
 def set_seed(seed):
@@ -145,6 +148,7 @@ def main():
     parser.add_argument('-user_prop', type=float, default=1.0)
     parser.add_argument('-user_num', type=int, default=-1)
     parser.add_argument('-user_act_type', type=str, default='all', choices=['all', 'none', 'sequential_only', 'cross_course_only', 'backward_only', 'skip_only', 'no_sequential', 'no_cross_course', 'no_backward', 'no_skip'])
+    parser.add_argument('-no_weight', action='store_true')
     parser.add_argument('-seed', type=int, default=0)
     args = parser.parse_args()
     set_seed(args.seed)
@@ -167,7 +171,7 @@ def main():
         user_act_type = [True]*4
         p = ['no_sequential', 'no_cross_course', 'no_backward', 'no_skip'].index(args.user_act_type)
         user_act_type[p] = False
-    build_concept_graph(args.dataset, args.alpha, video_order, course_dependency, user_act, args.user_prop, args.user_num, user_act_type)
+    build_concept_graph(args.dataset, args.alpha, video_order, course_dependency, user_act, args.user_prop, args.user_num, user_act_type, args.no_weight)
 
 if __name__ == '__main__':
     main()
