@@ -9,7 +9,6 @@ def main():
     parser = argparse.ArgumentParser(description='Postprocess')
     parser.add_argument('-model', type=str, required=True, choices=['LSTM', 'LSTM_S', 'LSTM_GCN', 'TextCNN', 'GCN'])
     parser.add_argument('-dataset', type=str, required=True, choices=['moocen', 'mooczh'])
-    parser.add_argument('-max_term_length', type=int, default=7)
     parser.add_argument('-feature_dim', type=int, default=24)
     args = parser.parse_args()
     if args.dataset in ['moocen']:
@@ -18,7 +17,7 @@ def main():
         lang = 'zh'
     if not os.path.exists('predictions/'):
         os.mkdir('predictions/')
-    data_loader = DataLoader(args.dataset, args.model, lang, args.max_term_length)
+    data_loader = DataLoader(args.dataset, args.model, lang)
     config = Config(data_loader, args.feature_dim)
     processor = Processor(args.model, data_loader, config)
     predicts = processor.predict()

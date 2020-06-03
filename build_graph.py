@@ -5,6 +5,7 @@ from collections import Counter
 import math
 import random
 import tqdm
+import os
 
 def add_edge(graph, c1s, c2s, d):
     if c1s and c2s:
@@ -15,8 +16,12 @@ def add_edge(graph, c1s, c2s, d):
                     graph[c1][c2] += d
 
 def build_concept_graph(dataset, alpha, video_order, course_dependency, user_act, user_prop, user_num, user_act_type, no_weight):
-    labels = [video_order, course_dependency, user_act]
     prefix = 'dataset/{}/'.format(dataset)
+    if not os.path.exists(prefix+'course_dependency.txt'):
+        course_dependency = False
+    if not os.path.exists(prefix+'user-videos.json'):
+        user_act = False
+    flags = [video_order, course_dependency, user_act]
     concepts = []
     with open(prefix+'concepts.txt', 'r', encoding='utf-8') as f:
         for line in f.read().split('\n'):
@@ -121,7 +126,7 @@ def build_concept_graph(dataset, alpha, video_order, course_dependency, user_act
                 print('(video graph) sequential w: {:.3f}, cross_course w: {:.3f}, backward w: {:.3f}, skip w: {:.3f}'.format(tot[0], tot[1], tot[2], tot[3]))
     graphs = []
     for k in range(3):
-        if labels[k]:
+        if flags[k]:
             for i in range(vn):
                 for j in range(vn):
                     if vgraph[k][i][j] > 0:
@@ -140,7 +145,7 @@ def set_seed(seed):
 
 def main():
     parser = argparse.ArgumentParser(description='Prerequisite prediction')
-    parser.add_argument('-dataset', type=str, required=True, choices=['moocen', 'mooczh'])
+    parser.add_argument('-dataset', type=str, required=True)
     parser.add_argument('-alpha', type=float, default=None)
     parser.add_argument('-no_video_order', action='store_true')
     parser.add_argument('-no_course_dependency', action='store_true')
@@ -151,6 +156,7 @@ def main():
     parser.add_argument('-no_weight', action='store_true')
     parser.add_argument('-seed', type=int, default=0)
     args = parser.parse_args()
+    assert os.path.exists('dataset/{}/'.format(args.dataset))
     set_seed(args.seed)
     if not args.alpha:
         if args.dataset == 'moocen':
@@ -159,8 +165,8 @@ def main():
             args.alpha = 0.3
     assert 0.0 <= args.alpha <= 1.0 and 0.0 <= args.user_prop <= 1.0 and args.user_num >= -1
     video_order = not(args.no_video_order)
-    course_dependency = not(args.no_course_dependency) if args.dataset in ['mooczh'] else False
-    user_act = not(args.no_user_act) if args.dataset in ['mooczh'] else False
+    course_dependency = not(args.no_course_dependency)
+    user_act = not(args.no_user_act)
     if args.user_act_type in ['all', 'none']:
         user_act_type = [True]*4 if args.user_act_type == 'all' else [False]*4
     elif args.user_act_type.endswith('only'):

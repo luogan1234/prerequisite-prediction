@@ -8,9 +8,9 @@ import random
 import torch
 
 class DataLoader:
-    def __init__(self, dataset, model_name, lang, max_term_length):
+    def __init__(self, dataset, model_name, lang):
         self.dataset = dataset
-        self.max_term_length = max_term_length
+        self.max_term_length = 7
         self.model_name = model_name
         self.lang = lang
         dataset_path = 'dataset/{}/'.format(dataset)

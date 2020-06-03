@@ -11,7 +11,6 @@ import tqdm
 import random
 from models.lstm_model import LSTM
 from models.lstm_s_model import LSTM_S
-from models.lstm_gcn_model import LSTM_GCN
 from models.textcnn_model import TextCNN
 from models.gcn_model import GCN
 
@@ -20,8 +19,6 @@ def name_to_model(name, config):
         return LSTM(config)
     if name == 'LSTM_S':
         return LSTM_S(config)
-    if name == 'LSTM_GCN':
-        return LSTM_GCN(config)
     if name == 'TextCNN':
         return TextCNN(config)
     if name == 'GCN':
@@ -139,7 +136,7 @@ class Processor:
             rs.append(r)
             f1s.append(f1)
             if not _result_path:
-                result_path = 'result/{}_{}_{}.txt'.format(self.model_name, self.dataset, self.config.embedding_dim)
+                result_path = 'result/{}_{}.txt'.format(self.model_name, self.dataset)
             else:
                 result_path = 'result/{}'.format(_result_path)
             if not os.path.exists(result_path):
