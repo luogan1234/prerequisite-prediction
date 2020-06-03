@@ -1,2 +1,2 @@
-wget http://lfs.aminer.cn/moocdata/data/prerequisite_dataset.zip
+wget http://lfs.aminer.cn/misc/moocdata/data/prerequisite_dataset.zip
 unzip prerequisite_dataset.zip
