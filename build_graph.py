@@ -152,7 +152,8 @@ def main():
     parser.add_argument('-no_user_act', action='store_true')
     parser.add_argument('-user_prop', type=float, default=1.0)
     parser.add_argument('-user_num', type=int, default=-1)
-    parser.add_argument('-user_act_type', type=str, default='all', choices=['all', 'none', 'sequential_only', 'cross_course_only', 'backward_only', 'skip_only', 'no_sequential', 'no_cross_course', 'no_backward', 'no_skip'])
+    # skip_only is not accepted since our graphs only consider non-negative weights
+    parser.add_argument('-user_act_type', type=str, default='all', choices=['all', 'none', 'sequential_only', 'cross_course_only', 'backward_only', 'no_sequential', 'no_cross_course', 'no_backward', 'no_skip'])
     parser.add_argument('-no_weight', action='store_true')
     parser.add_argument('-seed', type=int, default=0)
     args = parser.parse_args()
@@ -171,7 +172,7 @@ def main():
         user_act_type = [True]*4 if args.user_act_type == 'all' else [False]*4
     elif args.user_act_type.endswith('only'):
         user_act_type = [False]*4
-        p = ['sequential_only', 'cross_course_only', 'backward_only', 'skip_only'].index(args.user_act_type)
+        p = ['sequential_only', 'cross_course_only', 'backward_only'].index(args.user_act_type)
         user_act_type[p] = True
     else:
         user_act_type = [True]*4

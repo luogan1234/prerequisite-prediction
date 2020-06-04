@@ -109,7 +109,7 @@ for feature_dim in 4 8 16 24 32; do
   mv result/feature_zh.txt result/GCN_mooczh_dim${feature_dim}_cvs.txt
 done
 # gcn mooczh user_act_type
-for user_act_type in "none" "no_sequential" "no_cross_course" "no_backward" "no_skip"; do
+for user_act_type in "none" "sequential_only" "cross_course_only" "backward_only" "no_sequential" "no_cross_course" "no_backward" "no_skip"; do
   cmd="python build_graph.py -dataset mooczh -no_video_order -no_course_dependency -user_act_type $user_act_type"
   echo $cmd
   $cmd
