@@ -7,12 +7,14 @@ Requirements:
 - sklearn
 - pytorch_pretrained_bert
 
-Run `bash get_data.sh` to download datasets. Dataset introduction is at `dataset/readme.md`.
+Process:
 
-Run `bash experiment_main.sh` to do main experiments.
+1. Run `bash get_data.sh` to download datasets. Dataset introduction is at `dataset/readme.md`.
 
-Run `bash experiment_other.sh` to do other experiments.
+2. Run `bash experiment_main.sh` to do main experiments.
 
-Run `python stat.py` to get the experiment results.
+3. Run `bash experiment_other.sh` to do other experiments.
 
-Run `python postprocess_example.sh` to get the 10-fold ensemble predictions.
+4. Run `python stat.py` to get the experiment results.
+
+5. Run `python postprocess_example.sh` to get the 10-fold ensemble predictions.
