@@ -1,7 +1,7 @@
 import argparse
-from data_loader import DataLoader
-from processor import Processor
 from config import Config
+from data_loader import PreqDataLoader
+from processor import Processor
 import pickle
 import os
 import torch
@@ -18,26 +18,19 @@ def set_seed(seed):
 
 def main():
     parser = argparse.ArgumentParser(description='Prerequisite prediction')
-    parser.add_argument('-model', type=str, required=True, choices=['LSTM', 'LSTM_S', 'TextCNN', 'GCN'])
     parser.add_argument('-dataset', type=str, required=True, choices=['moocen', 'mooczh'])
+    parser.add_argument('-model', type=str, required=True, choices=['LSTM', 'LSTM_S', 'TextCNN', 'GCN'])
     parser.add_argument('-feature_dim', type=int, default=24)
-    parser.add_argument('-seed', type=int, default=0)
     parser.add_argument('-result_path', type=str, default=None)
-    parser.add_argument('-output_model', action='store_true')
+    parser.add_argument('-save_model', action='store_true')
+    parser.add_argument('-seed', type=int, default=0)
+    parser.add_argument('-cpu', action='store_true')
     args = parser.parse_args()
     set_seed(args.seed)
-    if args.dataset in ['moocen']:
-        lang = 'en'
-    if args.dataset in ['mooczh']:
-        lang = 'zh'
-    if not os.path.exists('model_states/'):
-        os.mkdir('model_states/')
-    if not os.path.exists('result/'):
-        os.mkdir('result/')
-    data_loader = DataLoader(args.dataset, args.model, lang)
-    config = Config(data_loader, args.feature_dim)
-    processor = Processor(args.model, data_loader, config)
-    processor.run(args.result_path, args.output_model)
+    config = Config(args.dataset, args.model, args.feature_dim, args.result_path, args.save_model, args.seed, args.cpu)
+    data_loader = PreqDataLoader(config)
+    processor = Processor(config, data_loader)
+    processor.train()
 
 if __name__ == '__main__':
     main()

@@ -9,7 +9,7 @@ Requirements:
 
 Process:
 
-1. Run `bash get_data.sh` to download datasets. Dataset introduction is at `dataset/readme.md`.
+1. Run `python init.py` to download datasets. Dataset introduction is at `dataset/readme.md`.
 
 2. Run `bash experiment_main.sh` to do main experiments.
 
@@ -17,4 +17,6 @@ Process:
 
 4. Run `python stat.py` to get the experiment results.
 
-5. Run `python postprocess_example.sh` to get the 10-fold ensemble predictions.
+5. Run `bash postprocess.sh` to get the ensemble predictions.
+
+Experiments run on gpu by default.
