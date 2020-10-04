@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from pytorch_pretrained_bert import BertTokenizer, BertModel
+from transformers import BertTokenizer, BertModel
 from sklearn.decomposition import PCA
 from torch.utils.data import Dataset, DataLoader, random_split
 import json
@@ -56,9 +56,9 @@ class PreqDataset(Dataset):
             for concept in tqdm.tqdm(self.concepts):
                 ids = tokenizer.tokenize(concept)
                 ids = tokenizer.convert_tokens_to_ids(ids)[:self.config.max_term_length]
-                ids = torch.tensor([cls]+ids+[sep], dtype=torch.long).unsqueeze(0).to(self.config.device())
+                ids = torch.tensor([cls]+ids+[sep], dtype=torch.long).unsqueeze(0).to(self.config.device)
                 with torch.no_grad():
-                    h, _ = bert(ids, output_all_encoded_layers=False)
+                    h, _ = bert(ids)
                     h = h.squeeze(0)[1:-1]
                     ce = torch.mean(h, 0)
                 te = torch.zeros((self.config.max_term_length, h.size(1)))

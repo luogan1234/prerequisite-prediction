@@ -130,6 +130,7 @@ model_states/
 result/
 predictions/
 *.zip
+wandb/
 
 # Pyre type checker
 .pyre/

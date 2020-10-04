@@ -14,6 +14,7 @@ class Config:
             self.language = 'en'
         if dataset in ['mooczh']:
             self.language = 'zh'
+        assert self.language, 'Need to provide the language information for new datasets'
         
         self.max_term_length = 7
         self.embedding_dim = 36

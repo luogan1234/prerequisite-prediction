@@ -5,7 +5,7 @@ Requirements:
 - Python >= 3.5
 - PyTorch >= 1.3.0
 - sklearn
-- pytorch_pretrained_bert
+- transformers
 
 Process:
 
