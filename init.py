@@ -5,8 +5,6 @@ if not os.path.exists('dataset/'):
     os.system('unzip prerequisite_dataset.zip')
 if not os.path.exists('result/'):
     os.mkdir('result/')
-if not os.path.exists('result/result/'):
-    os.mkdir('result/result/')
 if not os.path.exists('result/model_states/'):
     os.mkdir('result/model_states/')
 if not os.path.exists('result/predictions/'):

@@ -2,11 +2,13 @@ import numpy as np
 import os
 from transformers import BertTokenizer, BertModel
 from sklearn.decomposition import PCA
+
 from torch.utils.data import Dataset, DataLoader, random_split
 import json
 import tqdm
 import random
 import torch
+import pickle
 
 class PreqDataset(Dataset):
     def __init__(self, config):
@@ -15,12 +17,59 @@ class PreqDataset(Dataset):
         self.config = config
         with open(os.path.join(self.dataset_path, 'concepts.txt'), 'r', encoding='utf-8') as f:
             self.concepts = [c for c in f.read().split('\n') if c]
-        self.load_embedding()
+        # convert concepts into token ids by BertTokenizer
+        file = os.path.join(self.dataset_path, 'concept_tokens.pkl')
+        if not os.path.exists(file):
+            if config.language == 'en':
+                tokenzier = BertTokenizer.from_pretrained('bert-base-uncased')
+            if config.language == 'zh':
+                tokenzier = BertTokenizer.from_pretrained('bert-base-chinese')
+            self.tokens = []
+            for concept in self.concepts:
+                token = tokenzier.encode(concept, truncation=True, max_length=config.max_term_length)
+                self.tokens.append(token)
+            with open(file, 'wb') as f:
+                pickle.dump(self.tokens, f)
+        else:
+            with open(file, 'rb') as f:
+                self.tokens = pickle.load(f)
+        # get concept embeddings by BertModel
+        file = os.path.join(self.dataset_path, 'embeddings.pth')
+        if not os.path.exists(file):
+            if config.language == 'en':
+                bert = BertModel.from_pretrained('bert-base-uncased')
+            if config.language == 'zh':
+                bert = BertModel.from_pretrained('bert-base-chinese')
+            for p in bert.parameters():
+                p.requires_grad = False
+            bert.eval()
+            bert.to(config.device)
+            concept_embedding = []
+            for token in tqdm.tqdm(self.tokens):
+                token = torch.tensor(token, dtype=torch.long).to(config.device)
+                with torch.no_grad():
+                    h, _ = bert(token.unsqueeze(0))
+                    h = h.squeeze(0)[1:-1]
+                    ce = torch.mean(h, 0)
+                concept_embedding.append(ce.cpu())
+            pca = PCA()
+            X = torch.stack(concept_embedding).numpy()
+            X = pca.fit_transform(X)
+            self.concept_embedding = torch.from_numpy(X)
+            with open(file, 'wb') as f:
+                torch.save(self.concept_embedding, f)
+        else:
+            with open(file, 'rb') as f:
+                self.concept_embedding = torch.load(f)
+        print('Get concept embeddings done.')
+        # load prerequisite pairs
         self.data = []
-        with open(os.path.join(self.dataset_path, 'preq.txt'), 'r', encoding='utf-8') as f:
+        with open(os.path.join(self.dataset_path, 'pairs.txt'), 'r', encoding='utf-8') as f:
             for line in f:
                 s = line.split('\t')
-                self.data.append({'i1': self.concepts.index(s[0]), 'i2': self.concepts.index(s[1]), 'label': int(s[2])})
+                i1, i2, label = self.concepts.index(s[0]), self.concepts.index(s[1]), int(s[2])
+                t1, t2 = self.tokens[i1], self.tokens[i2]
+                self.data.append({'i1': i1, 'i2': i2, 't1': t1, 't2': t2, 'label': label})
         n = len(self.concepts)
         graph_path = os.path.join(self.dataset_path, 'graph.npy')
         if os.path.exists(graph_path):
@@ -34,52 +83,6 @@ class PreqDataset(Dataset):
             self.user_feature = np.zeros((0, n, n))
         print('data loader init finished.')
     
-    def load_embedding(self):
-        file = os.path.join(self.dataset_path, 'embedding.pth')
-        if os.path.exists(file):
-            with open(file, 'rb') as f:
-                self.concept_embedding, self.token_embedding = torch.load(f)
-        else:
-            print('load embedding:')
-            if self.config.language == 'en':
-                tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-                bert = BertModel.from_pretrained('bert-base-uncased')
-            if self.config.language == 'zh':
-                tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
-                bert = BertModel.from_pretrained('bert-base-chinese')
-            for p in bert.parameters():
-                p.requires_grad = False
-            cls, sep = tokenizer.convert_tokens_to_ids(['[CLS]', '[SEP]'])  # [CLS]: 101, [SEP]: 102
-            concept_embedding, token_embedding = [], []
-            bert.eval()
-            bert.to(self.config.device)
-            for concept in tqdm.tqdm(self.concepts):
-                ids = tokenizer.tokenize(concept)
-                ids = tokenizer.convert_tokens_to_ids(ids)[:self.config.max_term_length]
-                ids = torch.tensor([cls]+ids+[sep], dtype=torch.long).unsqueeze(0).to(self.config.device)
-                with torch.no_grad():
-                    h, _ = bert(ids)
-                    h = h.squeeze(0)[1:-1]
-                    ce = torch.mean(h, 0)
-                te = torch.zeros((self.config.max_term_length, h.size(1)))
-                te[:h.size(0), :] = h
-                concept_embedding.append(ce)
-                token_embedding.append(te)
-            pca = PCA()
-            X = torch.stack(concept_embedding).cpu().numpy()
-            X = pca.fit_transform(X)
-            self.concept_embedding = torch.from_numpy(X)
-            pca = PCA()
-            X = torch.cat(token_embedding, 0).cpu().numpy()
-            pca.fit(X)
-            tmp = []
-            for te in token_embedding:
-                X = te.cpu().numpy()
-                tmp.append(torch.from_numpy(pca.transform(X)))
-            self.token_embedding = torch.stack(tmp)
-            with open(file, 'wb') as f:
-                torch.save([self.concept_embedding, self.token_embedding], f)
-    
     def all_pairs(self):
         n = len(self.concepts)
         match = np.empty((n, n))
@@ -90,15 +93,16 @@ class PreqDataset(Dataset):
         for i in range(n):
             for j in range(n):
                 if i != j:
+                    t1, t2 = self.tokens[i], self.tokens[j]
                     feature = self.user_feature[:, i, j]
-                    data.append({'i1': i, 'i2': j, 'f': feature, 'label': match[i][j]})
+                    data.append({'i1': i, 'i2': j, 't1': t1, 't2': t2, 'f': feature, 'label': match[i][j]})
         return match, data
     
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        datum = self.data[idx]
+        datum = self.data[idx].copy()
         datum['f'] = self.user_feature[:, datum['i1'], datum['i2']]
         return datum
 
@@ -107,14 +111,24 @@ class MyBatch:
         self.config = config
     
     def __call__(self, data):
-        i1 = [datum['i1'] for datum in data]
+        max_len_t1, max_len_t2 = 0, 0
+        for datum in data:
+            max_len_t1 = max(max_len_t1, len(datum['t1']))
+            max_len_t2 = max(max_len_t2, len(datum['t2']))
+        i1, i2, t1, t2, f, labels = [], [], [], [], [], []
+        for datum in data:
+            i1.append(datum['i1'])
+            i2.append(datum['i2'])
+            t1.append(datum['t1']+[0]*(max_len_t1-len(datum['t1'])))
+            t2.append(datum['t2']+[0]*(max_len_t2-len(datum['t2'])))
+            f.append(datum['f'])
+            labels.append(datum['label'])
         i1 = torch.tensor(i1, dtype=torch.long).to(self.config.device)
-        i2 = [datum['i2'] for datum in data]
         i2 = torch.tensor(i2, dtype=torch.long).to(self.config.device)
-        f = [datum['f'] for datum in data]
+        t1 = torch.tensor(t1, dtype=torch.long).to(self.config.device)
+        t2 = torch.tensor(t2, dtype=torch.long).to(self.config.device)
         f = torch.tensor(f, dtype=torch.float).to(self.config.device)
-        labels = [datum['label'] for datum in data]
-        obj = {'i1': i1, 'i2': i2, 'f': f, 'labels': labels}
+        obj = {'i1': i1, 'i2': i2, 't1': t1, 't2': t2, 'f': f, 'labels': labels}
         return obj
 
 class PreqDataLoader:
@@ -128,12 +142,12 @@ class PreqDataLoader:
         n = len(self.dataset)
         d = n // 10
         splits = random_split(self.dataset, [d*8, d, n-d*9])
-        train = DataLoader(splits[0], self.config.batch_size, shuffle=True, collate_fn=self.fn)
-        eval = DataLoader(splits[1], self.config.batch_size, shuffle=False, collate_fn=self.fn)
-        test = DataLoader(splits[2], self.config.batch_size, shuffle=False, collate_fn=self.fn)
+        train = DataLoader(splits[0], self.config.batch_size('train'), shuffle=True, collate_fn=self.fn)
+        eval = DataLoader(splits[1], self.config.batch_size('eval'), shuffle=False, collate_fn=self.fn)
+        test = DataLoader(splits[2], self.config.batch_size('eval'), shuffle=False, collate_fn=self.fn)
         return train, eval, test
     
     def get_predict(self):
         match, data = self.dataset.all_pairs()
-        data = DataLoader(data, self.config.batch_size, shuffle=False, collate_fn=self.fn)
+        data = DataLoader(data, self.config.batch_size('eval'), shuffle=False, collate_fn=self.fn)
         return match, data

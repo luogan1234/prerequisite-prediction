@@ -11,9 +11,7 @@ Process:
 
 1. Run `python init.py` to download datasets. Dataset introduction is at `dataset/readme.md`.
 
-2. Run `bash experiment_main.sh` to do main experiments.
-
-3. Run `bash experiment_other.sh` to do other experiments.
+2. Run `bash experiments.sh` to do experiments.
 
 4. Run `python stat.py` to get the experiment results.
 
