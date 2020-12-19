@@ -17,12 +17,18 @@ def set_seed(seed):
     torch.backends.cudnn.deterministic = True
 
 def main():
+    if not os.path.exists('result/'):
+        os.mkdir('result/')
+    if not os.path.exists('result/model_states/'):
+        os.mkdir('result/model_states/')
+    if not os.path.exists('result/predictions/'):
+        os.mkdir('result/predictions/')
     parser = argparse.ArgumentParser(description='Prerequisite prediction')
     parser.add_argument('-dataset', type=str, required=True, choices=['moocen', 'mooczh'])
     parser.add_argument('-model', type=str, required=True, choices=['lstm', 'gcn', 'gat'])
     parser.add_argument('-concat_user_feature', action='store_true')
     parser.add_argument('-embedding_dim', type=int, default=32)
-    parser.add_argument('-encoding_dim', type=int, default=24)
+    parser.add_argument('-encoding_dim', type=int, default=32)
     parser.add_argument('-info', type=str, default='')
     parser.add_argument('-seed', type=int, default=0)
     parser.add_argument('-cpu', action='store_true')
