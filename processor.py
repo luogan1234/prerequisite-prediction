@@ -10,6 +10,7 @@ import numpy as np
 import tqdm
 import random
 from model.model import Model
+import copy
 
 class Processor:
     def __init__(self, config, data_loader):
@@ -57,8 +58,12 @@ class Processor:
         p = precision_score(trues, preds, average='binary')
         r = recall_score(trues, preds, average='binary')
         f1 = f1_score(trues, preds, average='binary')
-        scores = {'acc': round(acc, 3), 'p': round(p, 3), 'r': round(r, 3), 'f1': round(f1, 3)}
-        return eval_loss, scores
+        score = {'acc': acc, 'p': p, 'r': r, 'f1': f1}
+        return eval_loss, score
+    
+    def score_to_str(self, score):
+        string = 'acc: {:.4f}, p: {:.4f}, r: {:.4f}, f1: {:.4f}'.format(score['acc'], score['p'], score['r'], score['f1'])
+        return string
     
     def train(self):
         self.model = Model(self.config)
@@ -71,7 +76,7 @@ class Processor:
         min_loss = 1e16
         patience = 0
         train_tqdm = tqdm.tqdm(range(self.config.max_epochs))
-        train_tqdm.set_description('Epoch {} | train_loss: {:.3f} eval_loss: {:.3f}'.format(0, 0, 0))
+        train_tqdm.set_description('Epoch {} | train_loss: {:.4f} eval_loss: {:.4f}'.format(0, 0, 0))
         try:
             for epoch in train_tqdm:
                 train_loss = 0.0
@@ -79,12 +84,12 @@ class Processor:
                     loss = self.train_one_step(batch)
                     train_loss += loss
                 train_loss /= len(train)
-                eval_loss, scores = self.evaluate(eval)
-                train_tqdm.set_description('Epoch {} | train_loss: {:.3f} eval_loss: {:.3f}'.format(epoch, train_loss, eval_loss))
+                eval_loss, score = self.evaluate(eval)
+                train_tqdm.set_description('Epoch {} | train_loss: {:.4f} eval_loss: {:.4f}'.format(epoch, train_loss, eval_loss))
                 if eval_loss < min_loss:
                     patience = 0
                     min_loss = eval_loss
-                    best_para = self.model.state_dict()
+                    best_para = copy.deepcopy(self.model.state_dict())
                 patience += 1
                 if patience > self.config.early_stop_time:
                     train_tqdm.close()
@@ -92,14 +97,14 @@ class Processor:
         except KeyboardInterrupt:
             train_tqdm.close()
             print('Exiting from training early, stop at epoch {}'.format(epoch))
-        print('Train finished, stop at {} epochs, min eval_loss {:.3f}'.format(epoch, min_loss))
-        test_loss, scores = self.evaluate(test)
-        print('Test finished, test loss {:.3f},'.format(test_loss), scores)
+        print('Train finished, stop at {} epochs, min eval_loss {:.4f}.'.format(epoch, min_loss))
+        test_loss, score = self.evaluate(test)
+        print('Test finished, test loss {:.4f},'.format(test_loss), self.score_to_str(score))
         with open('result/model_states/{}.pth'.format(self.config.store_name()), 'wb') as f:
             torch.save(best_para, f)
         with open('result/result.txt', 'a', encoding='utf-8') as f:
             obj = self.config.parameter_info()
-            obj.update(scores)
+            obj.update(score)
             f.write(json.dumps(obj)+'\n')
     
     def predict(self):

@@ -2,7 +2,6 @@ import numpy as np
 import os
 from transformers import BertTokenizer, BertModel
 from sklearn.decomposition import PCA
-
 from torch.utils.data import Dataset, DataLoader, random_split
 import json
 import tqdm
@@ -44,23 +43,33 @@ class PreqDataset(Dataset):
                 p.requires_grad = False
             bert.eval()
             bert.to(config.device)
-            concept_embedding = []
+            concept_embedding, token_embedding = [], []
             for token in tqdm.tqdm(self.tokens):
                 token = torch.tensor(token, dtype=torch.long).to(config.device)
                 with torch.no_grad():
                     h, _ = bert(token.unsqueeze(0))
                     h = h.squeeze(0)[1:-1]
                     ce = torch.mean(h, 0)
+                te = torch.zeros((self.config.max_term_length, h.size(1)))
+                te[:h.size(0), :] = h
                 concept_embedding.append(ce.cpu())
+                token_embedding.append(te)
             pca = PCA()
             X = torch.stack(concept_embedding).numpy()
             X = pca.fit_transform(X)
             self.concept_embedding = torch.from_numpy(X)
+            X = torch.cat(token_embedding, 0).cpu().numpy()
+            pca.fit(X)
+            tmp = []
+            for te in token_embedding:
+                X = te.cpu().numpy()
+                tmp.append(torch.from_numpy(pca.transform(X)))
+            self.token_embedding = torch.stack(tmp)
             with open(file, 'wb') as f:
-                torch.save(self.concept_embedding, f)
+                torch.save([self.concept_embedding, self.token_embedding], f)
         else:
             with open(file, 'rb') as f:
-                self.concept_embedding = torch.load(f)
+                self.concept_embedding, self.token_embedding = torch.load(f)
         print('Get concept embeddings done.')
         # load prerequisite pairs
         self.data = []
@@ -76,11 +85,11 @@ class PreqDataset(Dataset):
             self.graphs = np.load(graph_path)
         else:
             self.graphs = [np.eye(n)]
-        feature_path = os.path.join(self.dataset_path, 'user_feature.npy')
+        feature_path = os.path.join(self.dataset_path, 'feature.npy')
         if os.path.exists(feature_path):
-            self.user_feature = np.load(feature_path)
+            self.feature = np.load(feature_path)
         else:
-            self.user_feature = np.zeros((0, n, n))
+            self.feature = np.zeros((0, n, n))
         print('data loader init finished.')
     
     def all_pairs(self):
@@ -94,7 +103,7 @@ class PreqDataset(Dataset):
             for j in range(n):
                 if i != j:
                     t1, t2 = self.tokens[i], self.tokens[j]
-                    feature = self.user_feature[:, i, j]
+                    feature = self.feature[:, i, j]
                     data.append({'i1': i, 'i2': j, 't1': t1, 't2': t2, 'f': feature, 'label': match[i][j]})
         return match, data
     
@@ -103,7 +112,7 @@ class PreqDataset(Dataset):
 
     def __getitem__(self, idx):
         datum = self.data[idx].copy()
-        datum['f'] = self.user_feature[:, datum['i1'], datum['i2']]
+        datum['f'] = self.feature[:, datum['i1'], datum['i2']]
         return datum
 
 class MyBatch:

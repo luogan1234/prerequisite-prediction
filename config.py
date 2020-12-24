@@ -2,10 +2,10 @@ import numpy as np
 import torch
 
 class Config:
-    def __init__(self, dataset, model, concat_user_feature, embedding_dim, encoding_dim, info, seed, cpu):
+    def __init__(self, dataset, model, concat_feature, embedding_dim, encoding_dim, info, seed, cpu):
         self.dataset = dataset
         self.model = model
-        self.concat_user_feature = concat_user_feature
+        self.concat_feature = concat_feature
         self.embedding_dim = embedding_dim
         self.encoding_dim = encoding_dim
         self.info = info
@@ -19,7 +19,7 @@ class Config:
             self.vocab_num = 21128  # bert-base-chinese
         assert self.language, 'Need to provide the language information for new datasets'
         
-        self.max_term_length = 10
+        self.max_term_length = 20
         self.max_epochs = 500
         self.attention_dim = 32
         self.early_stop_time = 20
@@ -36,8 +36,9 @@ class Config:
         gcn_number = dataset.graphs.shape[0]
         self.laplacians1 = [self.to_laplacian_matrix(dataset.graphs[i]).T for i in range(gcn_number)]
         self.laplacians2 = [self.to_laplacian_matrix(dataset.graphs[i]) for i in range(gcn_number)]
-        self.user_feature_dim = dataset.user_feature.shape[0]
+        self.feature_dim = dataset.feature.shape[0]
         self.concept_embedding = dataset.concept_embedding[:, :self.embedding_dim].to(self.device)
+        self.token_embedding = dataset.token_embedding[:, :, :self.embedding_dim].to(self.device)
     
     def to_laplacian_matrix(self, graph):
         a = np.eye(graph.shape[0]) + graph
@@ -49,8 +50,8 @@ class Config:
         return laplacian
     
     def store_name(self):
-        return '{}_{}_{}_{}_{}_{}'.format(self.dataset, self.model, self.concat_user_feature, self.embedding_dim, self.encoding_dim, self.seed)
+        return '{}_{}_{}_{}_{}_{}'.format(self.dataset, self.model, self.concat_feature, self.embedding_dim, self.encoding_dim, self.seed)
     
     def parameter_info(self):
-        obj = {'dataset': self.dataset, 'model': self.model, 'concat_user_feature': self.concat_user_feature, 'embedding_dim': self.embedding_dim, 'encoding_dim': self.encoding_dim, 'info': self.info, 'seed': self.seed}
+        obj = {'dataset': self.dataset, 'model': self.model, 'concat_feature': self.concat_feature, 'embedding_dim': self.embedding_dim, 'encoding_dim': self.encoding_dim, 'info': self.info, 'seed': self.seed}
         return obj

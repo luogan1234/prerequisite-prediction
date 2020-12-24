@@ -15,7 +15,7 @@ def add_edge(graph, c1s, c2s, d):
                 if c1 != c2:
                     graph[c1][c2] += d
 
-def build_concept_graph(dataset, alpha, video_order, course_dependency, user_act, user_prop, user_num, user_act_type, no_weight):
+def build_concept_graph(dataset, alpha, video_order, course_dependency, user_act, user_prop, user_num, user_act_type, save_feature):
     prefix = 'dataset/{}/'.format(dataset)
     if not os.path.exists(prefix+'course_dependency.txt'):
         course_dependency = False
@@ -71,6 +71,7 @@ def build_concept_graph(dataset, alpha, video_order, course_dependency, user_act
                 if line:
                     c1, c2 = line.split('\t')
                     add_edge(cgraph[1], course_to_concept[c1], course_to_concept[c2], 1)
+    feature_cgraph, feature_vgraph = np.zeros((4, cn, cn)), np.zeros((4, vn, vn))
     if user_act:
         with open(prefix+'user-videos.json', 'r', encoding='utf-8') as f:
             data = [json.loads(line) for line in f.read().split('\n') if line]
@@ -94,6 +95,7 @@ def build_concept_graph(dataset, alpha, video_order, course_dependency, user_act
                                     s = alpha ** (j-i) * w
                                     vgraph[2][vs[i]][vs[j]] += s
                                     tot[0] += s
+                                    feature_vgraph[0][vs[i]][vs[j]] += s
                     if user_act_type[1]:  # cross_course
                         last_video_place = {}
                         for i in range(n):
@@ -109,6 +111,7 @@ def build_concept_graph(dataset, alpha, video_order, course_dependency, user_act
                                     s = alpha ** (j-i) * w
                                     vgraph[2][vs[j]][vs[i]] += s
                                     tot[1] += s
+                                    feature_vgraph[1][vs[j]][vs[i]] += s
                     if user_act_type[2]:  # backward
                         for i in range(n):
                             for j in range(i+1, n):
@@ -116,6 +119,7 @@ def build_concept_graph(dataset, alpha, video_order, course_dependency, user_act
                                     s = alpha ** (j-i) * w
                                     vgraph[2][vs[j]][vs[i]] += s
                                     tot[2] += s
+                                    feature_vgraph[2][vs[j]][vs[i]] += s
                     if user_act_type[3]:  # skip
                         for v in vs:
                             for i, pv in enumerate(pre[v]):
@@ -123,6 +127,7 @@ def build_concept_graph(dataset, alpha, video_order, course_dependency, user_act
                                     s = - alpha ** (i+1) * w
                                     vgraph[2][pv][v] += s
                                     tot[3] += s
+                                    feature_vgraph[3][pv][v] += s
                 print('(video graph) sequential w: {:.3f}, cross_course w: {:.3f}, backward w: {:.3f}, skip w: {:.3f}'.format(tot[0], tot[1], tot[2], tot[3]))
     graphs = []
     for k in range(3):
@@ -134,10 +139,14 @@ def build_concept_graph(dataset, alpha, video_order, course_dependency, user_act
             print('(video graph) graph {}, covered edge proportion: {:.3f}, total edge weight: {:.3f}'.format(k, len(vgraph[k][vgraph[k]>0]) / (vn*vn), np.sum(vgraph[k][vgraph[k]>0])))
             print('(concept graph) graph {}, covered edge proportion: {:.3f}, total edge weight: {:.3f}'.format(k, len(cgraph[k][cgraph[k]>0]) / (cn*cn), np.sum(cgraph[k])))
             graphs.append(cgraph[k])
-    if no_weight:
-        for graph in graphs:
-            graph[graph>0] = 1
     np.save(prefix+'graph.npy', np.array(graphs))
+    if user_act and all(user_act_type) and save_feature:
+        for k in range(4):
+            for i in range(vn):
+                for j in range(vn):
+                    if feature_vgraph[k][i][j] != 0:
+                        add_edge(feature_cgraph[k], video_to_concept[i], video_to_concept[j], feature_vgraph[k][i][j])
+        np.save(prefix+'feature.npy', feature_cgraph)
 
 def set_seed(seed):
     random.seed(seed)
@@ -154,7 +163,7 @@ def main():
     parser.add_argument('-user_num', type=int, default=-1)
     # skip_only is not accepted since our graphs only consider non-negative weights
     parser.add_argument('-user_act_type', type=str, default='all', choices=['all', 'none', 'sequential_only', 'cross_course_only', 'backward_only', 'no_sequential', 'no_cross_course', 'no_backward', 'no_skip'])
-    parser.add_argument('-no_weight', action='store_true')
+    parser.add_argument('-save_feature', action='store_true')
     parser.add_argument('-seed', type=int, default=0)
     args = parser.parse_args()
     assert os.path.exists('dataset/{}/'.format(args.dataset))
@@ -178,7 +187,7 @@ def main():
         user_act_type = [True]*4
         p = ['no_sequential', 'no_cross_course', 'no_backward', 'no_skip'].index(args.user_act_type)
         user_act_type[p] = False
-    build_concept_graph(args.dataset, args.alpha, video_order, course_dependency, user_act, args.user_prop, args.user_num, user_act_type, args.no_weight)
+    build_concept_graph(args.dataset, args.alpha, video_order, course_dependency, user_act, args.user_prop, args.user_num, user_act_type, args.save_feature)
 
 if __name__ == '__main__':
     main()

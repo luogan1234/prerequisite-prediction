@@ -1,0 +1,1 @@
+python build_graph.py -dataset mooczh -save_feature

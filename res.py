@@ -10,20 +10,20 @@ def stat():
             res.append(obj)
     dataset_union = set([obj['dataset'] for obj in res])
     model_union = set([obj['model'] for obj in res])
-    concat_user_feature_union = set([obj['concat_user_feature'] for obj in res])
+    concat_feature_union = set([obj['concat_feature'] for obj in res])
     embedding_dim_union = set([obj['embedding_dim'] for obj in res])
     encoding_dim_union = set([obj['encoding_dim'] for obj in res])
     info_union = set([obj['info'] for obj in res])
     seed_union = set([obj['seed'] for obj in res])
     for dataset in dataset_union:
         for model in model_union:
-            for concat_user_feature in concat_user_feature_union:
+            for concat_feature in concat_feature_union:
                 for embedding_dim in embedding_dim_union:
                     for encoding_dim in encoding_dim_union:
                         for info in info_union:
                             subset = []
                             for seed in seed_union:
-                                conditions = {'dataset': dataset, 'model': model, 'concat_user_feature': concat_user_feature, 'embedding_dim': embedding_dim, 'encoding_dim': encoding_dim, 'info': info, 'seed': seed}
+                                conditions = {'dataset': dataset, 'model': model, 'concat_feature': concat_feature, 'embedding_dim': embedding_dim, 'encoding_dim': encoding_dim, 'info': info, 'seed': seed}
                                 target = None
                                 for obj in res:
                                     if all([obj[key] == conditions[key] for key in conditions]):

@@ -2,7 +2,7 @@
 for dataset in "moocen" "mooczh"; do
   cmd="python build_graph.py -dataset $dataset -no_course_dependency -no_user_act"
   echo $cmd & $cmd
-  for model in "lstm" "gcn"; do
+  for model in "lstm1" "gcn"; do
     for seed in {0..49}; do
       cmd="python main.py -dataset $dataset -model $model -info main_v -seed $seed"
       echo $cmd & $cmd
@@ -53,11 +53,11 @@ for dataset in "mooczh"; do
   done
 done
 
-# lstm+feature
+# lstm1+feature
 cmd="python build_graph.py -dataset mooczh"
 echo $cmd & $cmd
 for seed in {0..49}; do
-  cmd="python main.py -dataset mooczh -model lstm -concat_user_feature -info concat_feature -seed $seed"
+  cmd="python main.py -dataset mooczh -model lstm1 -concat_feature -info concat_feature -seed $seed"
   echo $cmd & $cmd
 done
 # gcn moocen alpha
