@@ -17,11 +17,12 @@ class TextModule(BaseModule):
         self.out_dim = config.encoding_dim*2
     
     def forward(self, batch):
+        r1, r2 = batch['r1'], batch['r2']
         if self.config.model == 'lstm1':
             t1, t2 = batch['t1'], batch['t2']
-            e1, e2 = self.encoder1(t1), self.encoder2(t2)
+            e1, e2 = self.encoder1(t1, r1), self.encoder2(t2, r2)
         if self.config.model == 'lstm2':
             i1, i2 = batch['i1'], batch['i2']
-            e1, e2 = self.encoder1(i1), self.encoder2(i2)
+            e1, e2 = self.encoder1(i1, r1), self.encoder2(i2, r2)
         outs = torch.cat([e1, e2], 1)
         return outs

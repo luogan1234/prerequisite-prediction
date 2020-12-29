@@ -2,7 +2,7 @@
 for dataset in "moocen" "mooczh"; do
   cmd="python build_graph.py -dataset $dataset -no_course_dependency -no_user_act"
   echo $cmd & $cmd
-  for model in "lstm1" "gcn"; do
+  for model in "lstm1" "lstm2" "gcn"; do
     for seed in {0..49}; do
       cmd="python main.py -dataset $dataset -model $model -info main_v -seed $seed"
       echo $cmd & $cmd
@@ -53,12 +53,14 @@ for dataset in "mooczh"; do
   done
 done
 
-# lstm1+feature
+# lstm+feature
 cmd="python build_graph.py -dataset mooczh"
 echo $cmd & $cmd
-for seed in {0..49}; do
-  cmd="python main.py -dataset mooczh -model lstm1 -concat_feature -info concat_feature -seed $seed"
-  echo $cmd & $cmd
+for model in "lstm1" "lstm2" "gcn"; do
+  for seed in {0..49}; do
+    cmd="python main.py -dataset mooczh -model $model -concat_feature -info concat_feature -seed $seed"
+    echo $cmd & $cmd
+  done
 done
 # gcn moocen alpha
 for alpha in 0.1 0.3 0.5 0.7 0.9; do
@@ -85,7 +87,7 @@ for alpha in 0.1 0.3 0.5 0.7 0.9; do
   done
 done
 # gcn mooczh user_act_type
-for user_act_type in "none" "sequential_only" "cross_course_only" "backward_only" "no_sequential" "no_cross_course" "no_backward" "no_skip"; do
+for user_act_type in "no_sequential" "no_cross_course" "no_backward" "no_skip"; do
   cmd="python build_graph.py -dataset mooczh -user_act_type $user_act_type"
   echo $cmd & $cmd
   for seed in {0..49}; do
@@ -93,7 +95,7 @@ for user_act_type in "none" "sequential_only" "cross_course_only" "backward_only
     echo $cmd & $cmd
   done
 done
-# gcn mooczh user_number
+# gcn mooczh user number
 for user_num in 0 25 50 100 250 500; do
   for seed in {0..49}; do
     cmd="python build_graph.py -dataset mooczh -no_video_order -no_course_dependency -user_num $user_num -seed $seed"
@@ -102,6 +104,7 @@ for user_num in 0 25 50 100 250 500; do
     echo $cmd & $cmd
   done
 done
+
 for user_prop in 0.1 0.2 0.4 0.7 1.0; do
   for seed in {0..49}; do
     cmd="python build_graph.py -dataset mooczh -no_video_order -no_course_dependency -user_prop $user_prop -seed $seed"

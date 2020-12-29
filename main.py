@@ -27,7 +27,7 @@ def main():
     parser.add_argument('-dataset', type=str, required=True, choices=['moocen', 'mooczh'])
     parser.add_argument('-model', type=str, required=True, choices=['lstm1', 'lstm2', 'gcn', 'gat'])
     parser.add_argument('-concat_feature', action='store_true')
-    parser.add_argument('-embedding_dim', type=int, default=64)
+    parser.add_argument('-embedding_dim', type=int, default=32)
     parser.add_argument('-encoding_dim', type=int, default=32)
     parser.add_argument('-info', type=str, default='')
     parser.add_argument('-seed', type=int, default=0)

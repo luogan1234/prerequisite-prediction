@@ -8,13 +8,20 @@ def stat():
         for line in f:
             obj = json.loads(line)
             res.append(obj)
-    dataset_union = set([obj['dataset'] for obj in res])
-    model_union = set([obj['model'] for obj in res])
-    concat_feature_union = set([obj['concat_feature'] for obj in res])
-    embedding_dim_union = set([obj['embedding_dim'] for obj in res])
-    encoding_dim_union = set([obj['encoding_dim'] for obj in res])
-    info_union = set([obj['info'] for obj in res])
-    seed_union = set([obj['seed'] for obj in res])
+    dataset_union = list(set([obj['dataset'] for obj in res]))
+    model_union = list(set([obj['model'] for obj in res]))
+    concat_feature_union = list(set([obj['concat_feature'] for obj in res]))
+    embedding_dim_union = list(set([obj['embedding_dim'] for obj in res]))
+    encoding_dim_union = list(set([obj['encoding_dim'] for obj in res]))
+    info_union = list(set([obj['info'] for obj in res]))
+    seed_union = list(set([obj['seed'] for obj in res]))
+    dataset_union.sort()
+    model_union.sort()
+    concat_feature_union.sort()
+    embedding_dim_union.sort()
+    encoding_dim_union.sort()
+    info_union.sort()
+    seed_union.sort()
     for dataset in dataset_union:
         for model in model_union:
             for concat_feature in concat_feature_union:

@@ -162,11 +162,12 @@ def main():
     parser.add_argument('-user_prop', type=float, default=1.0)
     parser.add_argument('-user_num', type=int, default=-1)
     # skip_only is not accepted since our graphs only consider non-negative weights
-    parser.add_argument('-user_act_type', type=str, default='all', choices=['all', 'none', 'sequential_only', 'cross_course_only', 'backward_only', 'no_sequential', 'no_cross_course', 'no_backward', 'no_skip'])
+    parser.add_argument('-user_act_type', type=str, default='all', choices=['all', 'sequential_only', 'cross_course_only', 'backward_only', 'no_sequential', 'no_cross_course', 'no_backward', 'no_skip'])
     parser.add_argument('-save_feature', action='store_true')
     parser.add_argument('-seed', type=int, default=0)
     args = parser.parse_args()
     assert os.path.exists('dataset/{}/'.format(args.dataset))
+    assert args.user_prop == 1.0 or args.user_num == -1, 'Cannot set user_num and user_prop simultaneously.'
     set_seed(args.seed)
     if not args.alpha:
         if args.dataset == 'moocen':
@@ -177,8 +178,8 @@ def main():
     video_order = not(args.no_video_order)
     course_dependency = not(args.no_course_dependency)
     user_act = not(args.no_user_act)
-    if args.user_act_type in ['all', 'none']:
-        user_act_type = [True]*4 if args.user_act_type == 'all' else [False]*4
+    if args.user_act_type == 'all':
+        user_act_type = [True]*4
     elif args.user_act_type.endswith('only'):
         user_act_type = [False]*4
         p = ['sequential_only', 'cross_course_only', 'backward_only'].index(args.user_act_type)

@@ -47,7 +47,8 @@ class PreqDataset(Dataset):
             for token in tqdm.tqdm(self.tokens):
                 token = torch.tensor(token, dtype=torch.long).to(config.device)
                 with torch.no_grad():
-                    h, _ = bert(token.unsqueeze(0))
+                    outputs = bert(token.unsqueeze(0))
+                    h = outputs.last_hidden_state
                     h = h.squeeze(0)[1:-1]
                     ce = torch.mean(h, 0)
                 te = torch.zeros((self.config.max_term_length, h.size(1)))
@@ -124,12 +125,14 @@ class MyBatch:
         for datum in data:
             max_len_t1 = max(max_len_t1, len(datum['t1']))
             max_len_t2 = max(max_len_t2, len(datum['t2']))
-        i1, i2, t1, t2, f, labels = [], [], [], [], [], []
+        i1, i2, t1, t2, r1, r2, f, labels = [], [], [], [], [], [], [], []
         for datum in data:
             i1.append(datum['i1'])
             i2.append(datum['i2'])
             t1.append(datum['t1']+[0]*(max_len_t1-len(datum['t1'])))
             t2.append(datum['t2']+[0]*(max_len_t2-len(datum['t2'])))
+            r1.append(len(datum['t1'])-1)
+            r2.append(len(datum['t2'])-1)
             f.append(datum['f'])
             labels.append(datum['label'])
         i1 = torch.tensor(i1, dtype=torch.long).to(self.config.device)
@@ -137,7 +140,7 @@ class MyBatch:
         t1 = torch.tensor(t1, dtype=torch.long).to(self.config.device)
         t2 = torch.tensor(t2, dtype=torch.long).to(self.config.device)
         f = torch.tensor(f, dtype=torch.float).to(self.config.device)
-        obj = {'i1': i1, 'i2': i2, 't1': t1, 't2': t2, 'f': f, 'labels': labels}
+        obj = {'i1': i1, 'i2': i2, 't1': t1, 't2': t2, 'r1': r1, 'r2': r2, 'f': f, 'labels': labels}
         return obj
 
 class PreqDataLoader:
