@@ -8,7 +8,7 @@ import os
 def main():
     parser = argparse.ArgumentParser(description='Postprocess')
     parser.add_argument('-dataset', type=str, required=True, choices=['moocen', 'mooczh'])
-    parser.add_argument('-model', type=str, required=True, choices=['lstm', 'gcn', 'gat'])
+    parser.add_argument('-model', type=str, required=True, choices=['lstm1', 'lstm2', 'gcn', 'gat'])
     parser.add_argument('-concat_user_feature', action='store_true')
     parser.add_argument('-embedding_dim', type=int, default=32)
     parser.add_argument('-encoding_dim', type=int, default=32)

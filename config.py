@@ -50,7 +50,7 @@ class Config:
         return laplacian
     
     def store_name(self):
-        return '{}_{}_{}_{}_{}_{}'.format(self.dataset, self.model, self.concat_feature, self.embedding_dim, self.encoding_dim, self.seed)
+        return '{}_{}_{}_{}_{}_{}_{}'.format(self.dataset, self.model, self.concat_feature, self.embedding_dim, self.encoding_dim, self.info, self.seed)
     
     def parameter_info(self):
         obj = {'dataset': self.dataset, 'model': self.model, 'concat_feature': self.concat_feature, 'embedding_dim': self.embedding_dim, 'encoding_dim': self.encoding_dim, 'info': self.info, 'seed': self.seed}

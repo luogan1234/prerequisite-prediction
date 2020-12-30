@@ -104,7 +104,6 @@ for user_num in 0 25 50 100 250 500; do
     echo $cmd & $cmd
   done
 done
-
 for user_prop in 0.1 0.2 0.4 0.7 1.0; do
   for seed in {0..49}; do
     cmd="python build_graph.py -dataset mooczh -no_video_order -no_course_dependency -user_prop $user_prop -seed $seed"
